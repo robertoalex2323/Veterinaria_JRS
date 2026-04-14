@@ -12,6 +12,6 @@ Sistema web para la gestión de una clínica veterinaria.
 - Java 21
 - Spring Boot
 - Spring Security
-- JPA
+- Spring Data JPA
 - PostgreSQL
 - Thymeleaf
