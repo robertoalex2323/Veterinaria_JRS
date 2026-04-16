@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Veterinaria Pet Clinic Login</title>
+
+  <link rel="stylesheet" href="/src/main/resources/static/Css/Login.css">
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="left">
+      <img src="/src/main/resources/static/Imagen/Iconos/logo.png" alt="logo">
+      <h1>Pet Clinic</h1>
+      <p>Cuidando tus mascotas con amor</p>
+    </div>
+
+    <!-- DERECHA -->
+    <div class="right">
+
+      <form id="loginForm">
+        <h2>Iniciar Sesión</h2>
+
+        <label>Usuario</label>
+        <input type="text" id="user" placeholder="Ingrese usuario" required>
+
+        <label>Contraseña</label>
+        <input type="password" id="pass" placeholder="Ingrese contraseña" required>
+        <button type="submit">Ingresar</button>
+        <p id="msg"></p>
+      </form>
+    </div>
+
+  </div>
+  <script src="/src/main/resources/static/Js/Login.js"></script>
+
+</body>
+</html>
