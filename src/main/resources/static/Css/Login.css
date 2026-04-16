@@ -1,73 +1,83 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
 body {
-  margin: 0;
-  font-family: Arial;
-  background: #f3f4f6;
+    background: #f3f4f6;
 }
 
+/* CONTENEDOR PRINCIPAL */
 .container {
-  display: flex;
-  height: 100vh;
+    display: flex;
+    height: 100vh;
 }
 
-/* LADO IZQUIERDO */
+/* =========================
+   LADO IZQUIERDO
+========================= */
 .left {
-  flex: 1;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+    flex: 1;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .left img {
-  width: 140px;
-  border-radius: 50%;
-  margin-bottom: 15px;
+    width: 140px;
+    border-radius: 50%;
+    margin-bottom: 15px;
 }
 
-/* LADO DERECHO */
+/* =========================
+   LADO DERECHO
+========================= */
 .right {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 form {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  width: 320px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 320px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
 input {
-  width: 100%;
-  padding: 10px;
-  margin: 8px 0;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
 }
 
 button {
-  width: 100%;
-  padding: 10px;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
 }
 
 button:hover {
-  background: #1e40af;
+    background: #1e40af;
 }
 
 #msg {
-  margin-top: 10px;
-  font-size: 14px;
-  color: red;
+    margin-top: 10px;
+    font-size: 14px;
+    color: red;
 }
