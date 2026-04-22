@@ -1,0 +1,80 @@
+/* ============ PERFIL ============ */
+.perfil-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.perfil-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.perfil-header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    padding: 30px;
+    text-align: center;
+    color: white;
+}
+
+.perfil-avatar {
+    width: 100px;
+    height: 100px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.perfil-avatar i {
+    font-size: 3rem;
+}
+
+.perfil-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.perfil-header p {
+    margin: 5px 0 0;
+    opacity: 0.8;
+}
+
+.perfil-body {
+    padding: 30px;
+}
+
+.info-row {
+    display: flex;
+    padding: 12px 0;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.info-label {
+    width: 120px;
+    font-weight: 600;
+    color: var(--gray);
+}
+
+.info-value {
+    flex: 1;
+}
+
+.perfil-actions {
+    margin-top: 25px;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .info-row {
+        flex-direction: column;
+    }
+    .info-label {
+        width: auto;
+        margin-bottom: 5px;
+    }
+}

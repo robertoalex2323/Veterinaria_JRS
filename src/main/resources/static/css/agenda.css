@@ -1,0 +1,84 @@
+.agenda-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.date-nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.date-nav button {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.date-nav button:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.current-date {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.agenda-grid {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.agenda-hour {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.agenda-hour:last-child {
+    border-bottom: none;
+}
+
+.hour-label {
+    padding: 12px;
+    background: #F9FAFB;
+    font-weight: 600;
+    border-right: 1px solid #F3F4F6;
+}
+
+.hour-slot {
+    padding: 12px;
+    min-height: 60px;
+}
+
+.slot-occupied {
+    background: var(--primary-light);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.slot-occupied .mascota {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.slot-occupied .cliente {
+    font-size: 0.75rem;
+    color: var(--gray);
+}
+
+.slot-free {
+    color: var(--gray);
+    font-style: italic;
+    font-size: 0.8rem;
+}

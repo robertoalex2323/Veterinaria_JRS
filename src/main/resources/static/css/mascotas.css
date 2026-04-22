@@ -1,0 +1,91 @@
+/* ============ CITAS ============ */
+.citas-filters {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 150px;
+}
+
+.filter-group label {
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-bottom: 4px;
+    display: block;
+}
+
+.citas-calendar {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.cita-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #F3F4F6;
+    transition: background 0.2s;
+}
+
+.cita-row:hover {
+    background: #F9FAFB;
+}
+
+.cita-hora {
+    width: 100px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.cita-info {
+    flex: 1;
+}
+
+.cita-mascota {
+    font-weight: 600;
+}
+
+.cita-motivo {
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+
+.cita-estado {
+    width: 120px;
+}
+
+.estado-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.estado-agendada { background: #FEF3C7; color: #D97706; }
+.estado-cancelada { background: #FEE2E2; color: #DC2626; }
+.estado-completada { background: #D1FAE5; color: #059669; }
+
+.cita-actions {
+    width: 80px;
+    text-align: right;
+}
+
+@media (max-width: 768px) {
+    .cita-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .cita-hora, .cita-estado, .cita-actions {
+        width: auto;
+    }
+}
