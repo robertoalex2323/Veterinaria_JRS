@@ -1,80 +1,114 @@
-/* ============ PERFIL ============ */
-.perfil-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
+/* ============ PERFIL CSS ============ */
 
 .perfil-card {
-    background: white;
-    border-radius: 20px;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    background-color: #ffffff;
     overflow: hidden;
 }
 
-.perfil-header {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    padding: 30px;
+.perfil-header-bg {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    padding: 3rem 1.5rem;
     text-align: center;
+    position: relative;
+}
+
+.avatar-container {
+    position: absolute;
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    background: #fff;
+    border-radius: 50%;
+    padding: 5px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-container img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #eaecf4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #4e73df;
+}
+
+.perfil-info-section {
+    margin-top: 60px;
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eaecf4;
+}
+
+.nav-pills .nav-link {
+    color: #5a5c69;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #f8f9fc;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #4e73df;
     color: white;
 }
 
-.perfil-avatar {
-    width: 100px;
-    height: 100px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 15px;
+.nav-pills .nav-link i {
+    width: 20px;
+    text-align: center;
 }
 
-.perfil-avatar i {
-    font-size: 3rem;
+.form-control {
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    border: 1px solid #d1d3e2;
 }
 
-.perfil-header h3 {
-    margin: 0;
-    font-size: 1.3rem;
+.form-control:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
 }
 
-.perfil-header p {
-    margin: 5px 0 0;
-    opacity: 0.8;
+.input-group-text {
+    border-radius: 8px 0 0 8px;
+    background-color: #f8f9fc;
+    border: 1px solid #d1d3e2;
+    color: #858796;
 }
 
-.perfil-body {
-    padding: 30px;
-}
-
-.info-row {
-    display: flex;
-    padding: 12px 0;
-    border-bottom: 1px solid #F3F4F6;
-}
-
-.info-label {
-    width: 120px;
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+    border-radius: 8px;
+    padding: 0.7rem 1.5rem;
     font-weight: 600;
-    color: var(--gray);
 }
 
-.info-value {
-    flex: 1;
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
 }
 
-.perfil-actions {
-    margin-top: 25px;
-    display: flex;
-    gap: 15px;
-    justify-content: flex-end;
-}
-
-@media (max-width: 768px) {
-    .info-row {
-        flex-direction: column;
-    }
-    .info-label {
-        width: auto;
-        margin-bottom: 5px;
-    }
+.password-toggle {
+    cursor: pointer;
+    border-radius: 0 8px 8px 0;
 }

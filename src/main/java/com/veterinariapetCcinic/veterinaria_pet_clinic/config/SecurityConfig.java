@@ -29,55 +29,52 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService() {
         return username -> {
             var usuario = usuarioRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
-            
+                    .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
+
             return org.springframework.security.core.userdetails.User
-                .withUsername(usuario.getUsername())
-                .password(usuario.getPassword())
-                .authorities(new SimpleGrantedAuthority("ROLE_" + usuario.getRol()))
-                .disabled(!usuario.getActivo())
-                .build();
+                    .withUsername(usuario.getUsername())
+                    .password(usuario.getPassword())
+                    .authorities(new SimpleGrantedAuthority("ROLE_" + usuario.getRol()))
+                    .disabled(!usuario.getActivo())
+                    .build();
         };
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            
-            .authorizeHttpRequests(auth -> auth
-                // Recursos públicos
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
-                .requestMatchers("/login").permitAll()
-                
-                // Solo RECEPCIONISTA puede acceder a estas rutas
-                .requestMatchers("/recepcionista/**").hasRole("RECEPCIONISTA")
-                .requestMatchers("/clientes/**").hasRole("RECEPCIONISTA")
-                .requestMatchers("/mascotas/**").hasRole("RECEPCIONISTA")
-                .requestMatchers("/citas/**").hasRole("RECEPCIONISTA")
-                .requestMatchers("/agenda/**").hasRole("RECEPCIONISTA")
-                .requestMatchers("/pagos/**").hasRole("RECEPCIONISTA")
-                .requestMatchers("/dashboard").hasRole("RECEPCIONISTA")
-                
-                // Cualquier otra ruta requiere autenticación
-                .anyRequest().authenticated()
-            )
-            
-            .formLogin(form -> form
-                .loginPage("/login")
-                .defaultSuccessUrl("/dashboard", true)
-                .permitAll()
-            )
-            
-            .logout(logout -> logout
-                .logoutSuccessUrl("/login?logout")
-                .permitAll()
-            )
-            
-            .exceptionHandling(exception -> exception
-                .accessDeniedPage("/access-denied")
-            );
-        
+                .csrf(csrf -> csrf.disable())
+
+                .authorizeHttpRequests(auth -> auth
+                        // Recursos públicos
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
+                        .requestMatchers("/login").permitAll()
+
+                        // Solo RECEPCIONISTA puede acceder a estas rutas
+                        .requestMatchers("/recepcionista/**").hasRole("RECEPCIONISTA")
+                        .requestMatchers("/clientes/**").hasRole("RECEPCIONISTA")
+                        .requestMatchers("/mascotas/**").hasRole("RECEPCIONISTA")
+                        .requestMatchers("/citas/**").hasRole("RECEPCIONISTA")
+                        .requestMatchers("/agenda/**").hasRole("RECEPCIONISTA")
+                        .requestMatchers("/pagos/**").hasRole("RECEPCIONISTA")
+                        .requestMatchers("/diagnostico/**").hasRole("RECEPCIONISTA")
+                        .requestMatchers("/dashboard").hasRole("RECEPCIONISTA")
+
+                        // Cualquier otra ruta requiere autenticación
+                        .anyRequest().authenticated())
+
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/dashboard", true)
+                        .permitAll())
+
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll())
+
+                .exceptionHandling(exception -> exception
+                        .accessDeniedPage("/access-denied"));
+
         return http.build();
     }
 }

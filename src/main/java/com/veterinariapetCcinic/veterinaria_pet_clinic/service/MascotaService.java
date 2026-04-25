@@ -13,20 +13,20 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.MascotaReposit
 
 @Service
 public class MascotaService {
-    
+
     private final MascotaRepository mascotaRepository;
     private final ClienteRepository clienteRepository;
-    
+
     public MascotaService(MascotaRepository mascotaRepository, ClienteRepository clienteRepository) {
         this.mascotaRepository = mascotaRepository;
         this.clienteRepository = clienteRepository;
     }
-    
+
     @Transactional
     public Mascota guardar(Mascota mascota) {
         return mascotaRepository.save(mascota);
     }
-    
+
     @Transactional
     public Mascota registrarMascota(Long clienteId, Mascota mascota) {
         Optional<?> optional = clienteRepository.findById(clienteId);
@@ -37,20 +37,22 @@ public class MascotaService {
         }
         throw new RuntimeException("Cliente no encontrado");
     }
-    
+
     @Transactional
     public Mascota actualizar(Mascota mascota) {
         Mascota existente = buscarPorId(mascota.getId());
         existente.setNombre(mascota.getNombre());
         existente.setEspecie(mascota.getEspecie());
         existente.setRaza(mascota.getRaza());
+        existente.setFechaNacimiento(mascota.getFechaNacimiento());
         existente.setEdad(mascota.getEdad());
         existente.setAlergias(mascota.getAlergias());
         existente.setColor(mascota.getColor());
         existente.setPeso(mascota.getPeso());
+        existente.setFotoUrl(mascota.getFotoUrl());
         return mascotaRepository.save(existente);
     }
-    
+
     public Mascota buscarPorId(Long id) {
         Optional<?> optional = mascotaRepository.findById(id);
         if (optional.isPresent()) {
@@ -58,27 +60,27 @@ public class MascotaService {
         }
         throw new RuntimeException("Mascota no encontrada con ID: " + id);
     }
-    
+
     public List<Mascota> listarTodos() {
         return mascotaRepository.findAll();
     }
-    
+
     public List<Mascota> buscarPorCliente(Long clienteId) {
         return mascotaRepository.findByClienteId(clienteId);
     }
-    
+
     public List<Mascota> buscarPorNombre(String nombre) {
         return mascotaRepository.findByNombreContainingIgnoreCase(nombre);
     }
-    
+
     public long contarMascotas() {
         return mascotaRepository.count();
     }
-    
+
     public long contarMascotasPorCliente(Long clienteId) {
         return mascotaRepository.countByClienteId(clienteId);
     }
-    
+
     @Transactional
     public void eliminar(Long id) {
         mascotaRepository.deleteById(id);

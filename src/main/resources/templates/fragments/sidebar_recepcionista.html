@@ -11,6 +11,12 @@
     <link rel="stylesheet" th:href="@{/css/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     <link rel="stylesheet" th:if="${currentPage == 'clientes'}" th:href="@{/css/clientes.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'mascotas'}" th:href="@{/css/mascotas.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'citas'}" th:href="@{/css/citas.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'agenda'}" th:href="@{/css/agenda.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'pagos'}" th:href="@{/css/pagos.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'perfil'}" th:href="@{/css/perfil.css}">
+    <link rel="stylesheet" th:if="${currentPage == 'diagnostico'}" th:href="@{/css/diagnostico.css}">
 </head>
 
 <body>
@@ -70,7 +76,7 @@
                 </li>
                 <li class="nav-item">
                     <a th:classappend="${currentPage == 'ml'} ? 'active' : ''" class="nav-link"
-                        href="/recepcionista/ml/diagnostico">
+                        href="/recepcionista/diagnostico">
                         <i class="fas fa-robot"></i>
                         <span>Diagnóstico IA</span>
                     </a>

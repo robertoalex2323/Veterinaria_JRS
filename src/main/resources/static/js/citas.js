@@ -1,30 +1,25 @@
-// Citas específico
 document.addEventListener('DOMContentLoaded', function() {
-    const fechaInput = document.getElementById('fechaCita');
+    // Submit form automatically when date changes
+    const fechaInput = document.getElementById('fechaFiltro');
     if (fechaInput) {
-        fechaInput.addEventListener('change', cargarHorariosDisponibles);
+        fechaInput.addEventListener('change', function() {
+            document.getElementById('filtroCitasForm').submit();
+        });
+    }
+
+    // Initialize Select2 if available for better pet searching in forms
+    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+        $('#mascotaId').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Busca una mascota o cliente...'
+        });
     }
 });
 
-function cargarHorariosDisponibles() {
-    const fecha = document.getElementById('fechaCita').value;
-    const select = document.getElementById('horaCita');
-    
-    if (fecha && select) {
-        fetch(`/api/recepcionista/horarios/disponibles?fecha=${fecha}`)
-            .then(response => response.json())
-            .then(horarios => {
-                select.innerHTML = '<option value="">Seleccionar hora</option>';
-                horarios.forEach(h => {
-                    select.innerHTML += `<option value="${h}">${h}</option>`;
-                });
-            })
-            .catch(error => console.error('Error:', error));
-    }
-}
-
-function cancelarCita(id, mascota) {
-    if (confirm(`¿Cancelar cita de "${mascota}"?`)) {
-        window.location.href = `/recepcionista/citas/cancelar/${id}`;
+function confirmarCancelacion(id) {
+    const motivo = prompt('Por favor, ingrese el motivo de cancelación:');
+    if (motivo !== null) {
+        // Enviar con motivo
+        window.location.href = `/recepcionista/citas/cancelar/${id}?motivo=${encodeURIComponent(motivo)}`;
     }
 }
