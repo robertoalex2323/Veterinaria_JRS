@@ -17,13 +17,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
+               
                 .requestMatchers("/css/**", "/js/**", "/Imagen/**").permitAll()
                 .requestMatchers("/login").permitAll()
+                
+                .requestMatchers("/vendedor/**", "/api/v1/vendedor/**").hasRole("VENDEDOR")
+                .requestMatchers("/farmaceutico/**").hasRole("FARMACEUTICO")
+                
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/farmaceutico", true)
+                .defaultSuccessUrl("/vendedor", true) 
                 .permitAll()
             )
             .logout(logout -> logout
@@ -41,12 +46,20 @@ public class SecurityConfig {
 
     @Bean
     public InMemoryUserDetailsManager userDetailsService() {
+       
         UserDetails farmaceutico = User.builder()
             .username("admin")
-            .password(passwordEncoder().encode("admin123"))  // 🔒 Encriptada con BCrypt
+            .password(passwordEncoder().encode("admin123"))
             .roles("FARMACEUTICO")
             .build();
 
-        return new InMemoryUserDetailsManager(farmaceutico);
+       
+        UserDetails vendedor = User.builder()
+            .username("vendedor") 
+            .password(passwordEncoder().encode("vendedor_pet_clinic"))
+            .roles("VENDEDOR")
+            .build();
+
+        return new InMemoryUserDetailsManager(farmaceutico, vendedor);
     }
 }
