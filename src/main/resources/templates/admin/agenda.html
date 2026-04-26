@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sildebar_admin::layout(~{::content}, 'agenda')}">
+<head>
+    <title>Agenda - Administrador</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="admin-header">
+        <div>
+            <h2><i class="fas fa-calendar-day text-primary"></i> Agenda</h2>
+            <p>Listado general de horarios</p>
+        </div>
+    </div>
+
+    <div class="card admin-table-card">
+        <div class="card-header">Lista de Agendas</div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Duracion</th>
+                        <th>Veterinario</th>
+                        <th>Disponible</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="agenda : ${agendas}">
+                        <td th:text="${agenda.id}">1</td>
+                        <td th:text="${agenda.fecha != null ? #temporals.format(agenda.fecha, 'dd/MM/yyyy') : '-'}">-</td>
+                        <td th:text="${agenda.horaInicio != null ? #temporals.format(agenda.horaInicio, 'HH:mm') : '-'}">-</td>
+                        <td th:text="${agenda.horaFin != null ? #temporals.format(agenda.horaFin, 'HH:mm') : '-'}">-</td>
+                        <td th:text="${agenda.duracionTurno != null ? agenda.duracionTurno + ' min' : '-'}">-</td>
+                        <td th:text="${agenda.veterinario != null ? agenda.veterinario.nombre : '-'}">-</td>
+                        <td>
+                            <span class="badge" th:classappend="${agenda.disponible == true} ? 'bg-success' : 'bg-danger'"
+                                  th:text="${agenda.disponible == true} ? 'Si' : 'No'">Si</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(agendas)}">
+                        <td colspan="7" class="text-center text-muted py-4">No hay agendas registradas.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sildebar_admin::layout(~{::content}, 'mascotas')}">
+<head>
+    <title>Mascotas - Administrador</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="admin-header">
+        <div>
+            <h2><i class="fas fa-paw text-primary"></i> Mascotas</h2>
+            <p>Listado general de mascotas</p>
+        </div>
+    </div>
+
+    <div class="card admin-table-card">
+        <div class="card-header">Lista de Mascotas</div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Especie</th>
+                        <th>Raza</th>
+                        <th>Edad</th>
+                        <th>Peso</th>
+                        <th>Cliente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="mascota : ${mascotas}">
+                        <td th:text="${mascota.id}">1</td>
+                        <td class="fw-bold" th:text="${mascota.nombre}">Mascota</td>
+                        <td th:text="${mascota.especie}">Canino</td>
+                        <td th:text="${mascota.raza != null ? mascota.raza : '-'}">-</td>
+                        <td th:text="${mascota.edad != null ? mascota.edad : '-'}">-</td>
+                        <td th:text="${mascota.peso != null ? mascota.peso + ' kg' : '-'}">-</td>
+                        <td th:text="${mascota.cliente != null ? mascota.cliente.nombre : '-'}">-</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(mascotas)}">
+                        <td colspan="7" class="text-center text-muted py-4">No hay mascotas registradas.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

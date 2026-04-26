@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/sildebar_admin::layout(~{::content}, 'pagos')}">
+<head>
+    <title>Pagos - Administrador</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="admin-header">
+        <div>
+            <h2><i class="fas fa-money-bill-wave text-primary"></i> Pagos</h2>
+            <p>Listado general de pagos</p>
+        </div>
+    </div>
+
+    <div class="card admin-table-card">
+        <div class="card-header">Lista de Pagos</div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Monto</th>
+                        <th>Metodo</th>
+                        <th>Estado</th>
+                        <th>Cita</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="pago : ${pagos}">
+                        <td th:text="${pago.id}">1</td>
+                        <td th:text="${pago.fechaPago != null ? #temporals.format(pago.fechaPago, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                        <td th:text="${pago.cliente != null ? pago.cliente.nombre : '-'}">-</td>
+                        <td class="fw-bold">S/ <span th:text="${pago.monto != null ? pago.monto : 0}">0</span></td>
+                        <td><span class="badge bg-info" th:text="${pago.metodoPago != null ? pago.metodoPago : '-'}">-</span></td>
+                        <td><span class="badge bg-success" th:text="${pago.estado}">PAGADO</span></td>
+                        <td th:text="${pago.cita != null ? pago.cita.id : '-'}">-</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(pagos)}">
+                        <td colspan="7" class="text-center text-muted py-4">No hay pagos registrados.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
