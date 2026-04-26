@@ -46,6 +46,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
+                        // Solo ADMIN y ADMINISTRADOR pueden acceder a estas rutas
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "ADMINISTRADOR")
+
                         // Recursos públicos
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
                         .requestMatchers("/login").permitAll()
@@ -58,14 +61,24 @@ public class SecurityConfig {
                         .requestMatchers("/agenda/**").hasRole("RECEPCIONISTA")
                         .requestMatchers("/pagos/**").hasRole("RECEPCIONISTA")
                         .requestMatchers("/diagnostico/**").hasRole("RECEPCIONISTA")
-                        .requestMatchers("/dashboard").hasRole("RECEPCIONISTA")
+                        .requestMatchers("/dashboard").authenticated()
 
                         // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated())
 
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/dashboard", true)
+                        .successHandler((request, response, authentication) -> {
+                            boolean esAdmin = authentication.getAuthorities().stream()
+                                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN")
+                                            || authority.getAuthority().equals("ROLE_ADMINISTRADOR"));
+
+                            if (esAdmin) {
+                                response.sendRedirect("/admin/dashboard");
+                            } else {
+                                response.sendRedirect("/recepcionista/dashboard");
+                            }
+                        })
                         .permitAll())
 
                 .logout(logout -> logout
