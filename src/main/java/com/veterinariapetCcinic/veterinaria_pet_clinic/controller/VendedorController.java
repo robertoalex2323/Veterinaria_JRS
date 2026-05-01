@@ -1,8 +1,7 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
-import com.veterinariapetCcinic.veterinaria_pet_clinic.model.venta;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.model.Venta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.VentaService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,31 +13,31 @@ import java.util.Map;
 @CrossOrigin(origins = "*") 
 public class VendedorController {
 
-    @Autowired
-    private VentaService ventaService;
+    private final VentaService ventaService;
+
+    // Inyección de dependencias por constructor en lugar de @Autowired
+    public VendedorController(VentaService ventaService) {
+        this.ventaService = ventaService;
+    }
 
     @PostMapping("/ventas")
-    public ResponseEntity<venta> registrarVenta(@RequestBody venta nuevaVenta) {
-        venta ventaProcesada = ventaService.procesarVenta(nuevaVenta);
+    public ResponseEntity<Venta> registrarVenta(@RequestBody Venta nuevaVenta) {
+        Venta ventaProcesada = ventaService.procesarVenta(nuevaVenta);
         return new ResponseEntity<>(ventaProcesada, HttpStatus.CREATED);
     }
 
-    
     @PatchMapping("/pedidos/{id}/completar")
-    public ResponseEntity<String> atenderPedido(@PathVariable Long id) {
-        
-        return ResponseEntity.ok("Pedido #" + id + " ha sido marcado como COMPLETADO y ENTREGADO.");
+    public ResponseEntity<Map<String, String>> atenderPedido(@PathVariable Long id) {
+        // Mejor devolver un JSON en lugar de un String plano
+        return ResponseEntity.ok(Map.of("mensaje", "Pedido #" + id + " ha sido marcado como COMPLETADO y ENTREGADO."));
     }
 
-    
     @GetMapping("/ventas/{id}/boleta")
     public ResponseEntity<Map<String, Object>> emitirBoleta(@PathVariable Long id) {
-        
         Map<String, Object> boleta = ventaService.generarBoletaDigital(id);
         return ResponseEntity.ok(boleta);
     }
 
-   
     @GetMapping("/promociones/activas")
     public ResponseEntity<List<String>> listarPromociones() {
         List<String> promociones = List.of(
