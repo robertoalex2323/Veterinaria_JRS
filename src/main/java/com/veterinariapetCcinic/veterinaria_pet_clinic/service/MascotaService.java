@@ -1,7 +1,6 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +9,8 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.ClienteRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.MascotaRepository;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class MascotaService {
@@ -29,36 +30,37 @@ public class MascotaService {
 
     @Transactional
     public Mascota registrarMascota(Long clienteId, Mascota mascota) {
-        Optional<?> optional = clienteRepository.findById(clienteId);
-        if (optional.isPresent()) {
-            Cliente cliente = (Cliente) optional.get();
-            mascota.setCliente(cliente);
-            return mascotaRepository.save(mascota);
-        }
-        throw new RuntimeException("Cliente no encontrado");
+        Cliente cliente = clienteRepository.findById(clienteId)
+            .orElseThrow(() -> new EntityNotFoundException("Cliente no encontrado con ID: " + clienteId));
+        mascota.setCliente(cliente);
+        return mascotaRepository.save(mascota);
     }
 
     @Transactional
-    public Mascota actualizar(Mascota mascota) {
-        Mascota existente = buscarPorId(mascota.getId());
-        existente.setNombre(mascota.getNombre());
-        existente.setEspecie(mascota.getEspecie());
-        existente.setRaza(mascota.getRaza());
-        existente.setFechaNacimiento(mascota.getFechaNacimiento());
-        existente.setEdad(mascota.getEdad());
-        existente.setAlergias(mascota.getAlergias());
-        existente.setColor(mascota.getColor());
-        existente.setPeso(mascota.getPeso());
-        existente.setFotoUrl(mascota.getFotoUrl());
+    public Mascota actualizar(Mascota mascotaActualizada) {
+        Mascota existente = buscarPorId(mascotaActualizada.getId());
+        
+        existente.setNombre(mascotaActualizada.getNombre());
+        existente.setEspecie(mascotaActualizada.getEspecie());
+        existente.setRaza(mascotaActualizada.getRaza());
+        existente.setSexo(mascotaActualizada.getSexo());
+        existente.setFechaNacimiento(mascotaActualizada.getFechaNacimiento());
+        // No se setea edad porque es calculada automáticamente
+        existente.setPeso(mascotaActualizada.getPeso());
+        existente.setColor(mascotaActualizada.getColor());
+        existente.setAlergias(mascotaActualizada.getAlergias());
+        existente.setEstado(mascotaActualizada.getEstado());
+        existente.setObservaciones(mascotaActualizada.getObservaciones());
+        existente.setMicrochip(mascotaActualizada.getMicrochip());
+        existente.setEsterilizado(mascotaActualizada.getEsterilizado());
+        existente.setFotoUrl(mascotaActualizada.getFotoUrl());
+        
         return mascotaRepository.save(existente);
     }
 
     public Mascota buscarPorId(Long id) {
-        Optional<?> optional = mascotaRepository.findById(id);
-        if (optional.isPresent()) {
-            return (Mascota) optional.get();
-        }
-        throw new RuntimeException("Mascota no encontrada con ID: " + id);
+        return mascotaRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Mascota no encontrada con ID: " + id));
     }
 
     public List<Mascota> listarTodos() {
@@ -73,6 +75,10 @@ public class MascotaService {
         return mascotaRepository.findByNombreContainingIgnoreCase(nombre);
     }
 
+    public List<Mascota> buscarPorEspecie(String especie) {
+        return mascotaRepository.findByEspecie(especie);
+    }
+
     public long contarMascotas() {
         return mascotaRepository.count();
     }
@@ -83,6 +89,9 @@ public class MascotaService {
 
     @Transactional
     public void eliminar(Long id) {
+        if (!mascotaRepository.existsById(id)) {
+            throw new EntityNotFoundException("Mascota no encontrada con ID: " + id);
+        }
         mascotaRepository.deleteById(id);
     }
 }
