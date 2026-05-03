@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="sidebar">
+<aside class="sidebar">
+    <div class="logo">🐾</div>
+    <nav class="menu">
+        <a href="/veterinaria/dashboard" class="menu-item"
+            th:classappend="${currentPage == 'dashboard'} ? 'active' : ''">
+            <i class="fas fa-tachometer-alt"></i>
+        </a>
+        <a href="/veterinaria/pacientes" class="menu-item"
+            th:classappend="${currentPage == 'pacientes'} ? 'active' : ''">
+            <i class="fas fa-paw"></i>
+        </a>
+        <a href="/veterinaria/consultas" class="menu-item"
+            th:classappend="${currentPage == 'consultas'} ? 'active' : ''">
+            <i class="fas fa-stethoscope"></i>
+        </a>
+        <a href="/veterinaria/agenda" class="menu-item" th:classappend="${currentPage == 'agenda'} ? 'active' : ''">
+            <i class="fas fa-calendar-alt"></i>
+        </a>
+        <a href="/veterinaria/historial" class="menu-item"
+            th:classappend="${currentPage == 'historial'} ? 'active' : ''">
+            <i class="fas fa-notes-medical"></i>
+        </a>
+        <a href="/veterinaria/vacunas" class="menu-item" th:classappend="${currentPage == 'vacunas'} ? 'active' : ''">
+            <i class="fas fa-syringe"></i>
+        </a>
+        <a href="/veterinaria/alertas" class="menu-item" th:classappend="${currentPage == 'alertas'} ? 'active' : ''">
+            <i class="fas fa-exclamation-triangle"></i>
+        </a>
+        <a href="/veterinaria/diagnostico-ia" class="menu-item"
+            th:classappend="${currentPage == 'diagnostico'} ? 'active' : ''">
+            <i class="fas fa-robot"></i>
+        </a>
+        <a href="/veterinaria/perfil" class="menu-item" th:classappend="${currentPage == 'perfil'} ? 'active' : ''">
+            <i class="fas fa-user-md"></i>
+        </a>
+        <a href="/logout" class="menu-item">
+            <i class="fas fa-sign-out-alt"></i>
+        </a>
+    </nav>
+</aside>
+
+</html>
