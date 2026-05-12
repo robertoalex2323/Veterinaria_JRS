@@ -27,6 +27,46 @@ body {
     gap: 24px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.04);
 }
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;   /* Hace la columna vertical */
+    align-items: center;      /* Centra los íconos horizontalmente */
+    gap: 28px;                /* Espacio vertical entre íconos */
+    padding: 56px 0 0 0;      /* Padding superior (opcional, ajusta a gusto) */
+}
+.nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    color: rgba(255,255,255,0.85);
+    background: transparent;
+    font-size: 1.7rem;
+    margin-bottom: 0;
+    transition: background 0.18s, color 0.18s;
+}
+
+.nav-link.active {
+    background: rgba(255,255,255,0.20);
+    color: #e5d1fc;
+}
+.nav-link:hover {
+    background: rgba(255,255,255,0.13);
+    color: #fff;
+}
+.nav-link i {
+  color:  #ff0080 !important;   /* Color violeta pastel, visibilidad asegurada */
+  font-size: 1.6rem;
+  transition: color 0.2s;
+}
+.nav-link.active i {
+  color: #ff0080 !important;   /* Color más vivo cuando está activo */
+}
+.nav-link:hover i {
+  color:  #ff0080!important;   /* Color distinto al pasar el mouse */
+}
 
 .logo {
     width: 42px;
