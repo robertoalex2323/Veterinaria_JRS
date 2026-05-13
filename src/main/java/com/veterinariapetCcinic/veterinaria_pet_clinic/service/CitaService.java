@@ -16,17 +16,24 @@ public class CitaService {
     
     private final CitaRepository citaRepository;
     private final NotificacionService notificacionService;
+    private final AgendaService agendaService;
     
-    public CitaService(CitaRepository citaRepository, NotificacionService notificacionService) {
+    public CitaService(CitaRepository citaRepository, NotificacionService notificacionService, AgendaService agendaService) {
         this.citaRepository = citaRepository;
         this.notificacionService = notificacionService;
+        this.agendaService = agendaService;
     }
     
     @Transactional
     public Cita guardar(Cita cita) {
-        if (!validarDisponibilidad(cita.getFechaHora())) {
-            throw new RuntimeException("El horario no está disponible");
+        validarDisponibilidad(cita.getFechaHora());
+        
+        // Bloquear horario en la agenda automáticamente
+        com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda agenda = agendaService.buscarAgendaDisponible(cita.getFechaHora().toLocalDate(), cita.getFechaHora().toLocalTime());
+        if (agenda != null) {
+            agendaService.bloquearHorario(agenda.getId());
         }
+        
         Cita citaGuardada = citaRepository.save(cita);
         notificacionService.enviarConfirmacionCita(citaGuardada);
         return citaGuardada;
@@ -51,6 +58,13 @@ public class CitaService {
         cita.setEstado("CANCELADA");
         cita.setObservaciones("Cancelada: " + motivo);
         citaRepository.save(cita);
+        
+        // Liberar horario en la agenda automáticamente
+        com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda agenda = agendaService.buscarAgendaPorFechaYHora(cita.getFechaHora().toLocalDate(), cita.getFechaHora().toLocalTime());
+        if (agenda != null) {
+            agendaService.liberarHorario(agenda.getId());
+        }
+        
         notificacionService.enviarCancelacionCita(cita);
     }
     
@@ -85,11 +99,30 @@ public class CitaService {
         return citaRepository.findByEstado("ATENDIDA");
     }
     
-    private boolean validarDisponibilidad(LocalDateTime fechaHora) {
+    private void validarDisponibilidad(LocalDateTime fechaHora) {
+        // 1. Validar horarios lógicos (no pasado)
+        if (fechaHora.isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("No se pueden agendar citas en fechas u horas del pasado.");
+        }
+        
+        // 2. Validar el horario de atención (ej. 08:00 a 20:00)
+        LocalTime hora = fechaHora.toLocalTime();
+        if (hora.isBefore(LocalTime.of(8, 0)) || hora.isAfter(LocalTime.of(20, 0))) {
+            throw new RuntimeException("La cita debe estar dentro del horario de atención (08:00 - 20:00).");
+        }
+        
+        // 3. Vincular con Agenda (verificar si el horario existe y está disponible)
+        com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda agenda = agendaService.buscarAgendaDisponible(fechaHora.toLocalDate(), hora);
+        if (agenda == null) {
+            throw new RuntimeException("El horario seleccionado no existe en la agenda o ya no está disponible.");
+        }
+        
         LocalDateTime inicio = fechaHora.minusMinutes(30);
         LocalDateTime fin = fechaHora.plusMinutes(30);
         long cantidad = citaRepository.countByFechaHoraBetweenAndEstado(inicio, fin, "AGENDADA");
-        return cantidad == 0;
+        if (cantidad > 0) {
+            throw new RuntimeException("Ya existe una cita agendada cerca de este horario (cruce de 30 minutos).");
+        }
     }
     
     public long contarCitasHoy() {
