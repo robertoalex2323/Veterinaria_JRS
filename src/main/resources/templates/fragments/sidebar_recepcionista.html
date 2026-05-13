@@ -68,6 +68,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a th:classappend="${currentPage == 'agenda'} ? 'active' : ''" class="nav-link"
+                        href="/recepcionista/agenda/horarios">
+                        <i class="fas fa-clock"></i>
+                        <span>Horarios</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a th:classappend="${currentPage == 'pagos'} ? 'active' : ''" class="nav-link"
                         href="/recepcionista/pagos">
                         <i class="fas fa-money-bill-wave"></i>

@@ -7,6 +7,50 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    const fechaCita = document.getElementById('fechaCita');
+    const horaCita = document.getElementById('horaCita');
+
+    async function cargarHorariosDisponibles(fecha) {
+        if (!horaCita) return;
+
+        horaCita.innerHTML = '<option value="">Cargando...</option>';
+        horaCita.disabled = true;
+
+        try {
+            const res = await fetch(`/recepcionista/agenda/api/disponibles?fecha=${encodeURIComponent(fecha)}`);
+            if (!res.ok) throw new Error('No se pudieron cargar los horarios disponibles.');
+            const data = await res.json();
+
+            if (!Array.isArray(data) || data.length === 0) {
+                horaCita.innerHTML = '<option value="">No hay horarios disponibles</option>';
+                return;
+            }
+
+            horaCita.innerHTML = '<option value="">Seleccione un horario...</option>';
+            for (const slot of data) {
+                const opt = document.createElement('option');
+                opt.value = slot.horaInicio;
+                opt.textContent = `${slot.horaInicio} - ${slot.horaFin}`;
+                horaCita.appendChild(opt);
+            }
+            horaCita.disabled = false;
+        } catch (e) {
+            horaCita.innerHTML = '<option value="">Error al cargar horarios</option>';
+        }
+    }
+
+    if (fechaCita && horaCita) {
+        fechaCita.addEventListener('change', function() {
+            const fecha = fechaCita.value;
+            if (fecha) {
+                cargarHorariosDisponibles(fecha);
+            } else {
+                horaCita.innerHTML = '<option value="">Seleccione una fecha primero...</option>';
+                horaCita.disabled = true;
+            }
+        });
+    }
+
     // Initialize Select2 if available for better pet searching in forms
     if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
         $('#mascotaId').select2({

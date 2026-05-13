@@ -50,15 +50,18 @@
                                 <label class="form-label fw-bold text-dark">Fecha de la cita <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                                    <input type="date" name="fecha" class="form-control" required th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
+                                    <input type="date" id="fechaCita" name="fecha" class="form-control" required th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-dark">Hora <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="far fa-clock"></i></span>
-                                    <input type="time" name="hora" class="form-control" required>
+                                    <select id="horaCita" name="hora" class="form-select" required disabled>
+                                        <option value="">Seleccione una fecha primero...</option>
+                                    </select>
                                 </div>
+                                <div class="form-text"><i class="fas fa-info-circle"></i> Solo se muestran horarios disponibles según la agenda.</div>
                             </div>
                         </div>
 

@@ -55,7 +55,7 @@ public class AgendaService {
     public Agenda buscarAgendaDisponible(LocalDate fecha, java.time.LocalTime hora) {
         List<Agenda> agendas = agendaRepository.findAgendaDisponiblePorFechaYHora(fecha, hora);
         if (!agendas.isEmpty()) {
-            return agendas.get(0); // Devolvemos el primer horario que coincida
+            return agendas.get(0); 
         }
         return null;
     }
