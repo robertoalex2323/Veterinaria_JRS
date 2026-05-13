@@ -436,13 +436,8 @@ public class RecepcionistaController {
             Usuario usuario = usuarioRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-            // Basic update
             usuario.setNombre(nombre);
             usuario.setEmail(email);
-
-            // Logic for password change would typically go here using PasswordEncoder
-            // If we have an endpoint we could do it, but for now we just update the model
-            // fields
 
             usuarioRepository.save(usuario);
             redirectAttributes.addFlashAttribute("success", "Perfil actualizado correctamente");
