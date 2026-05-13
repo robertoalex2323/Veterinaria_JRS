@@ -81,7 +81,7 @@ public class RecepcionistaController {
         List<Pago> ultimosPagos = pagoService.obtenerPagosDelDia();
         model.addAttribute("ultimosPagos", ultimosPagos != null ? ultimosPagos : new ArrayList<>());
 
-        return "recepcionista/dashboard";
+        return "Recepcionista/dashboard";
     }
 
     // ============ GESTIÓN DE CLIENTES ============
@@ -97,14 +97,14 @@ public class RecepcionistaController {
         }
         model.addAttribute("clientes", clientes != null ? clientes : new ArrayList<>());
         model.addAttribute("buscar", buscar);
-        return "recepcionista/clientes";
+        return "Recepcionista/clientes";
     }
 
     @GetMapping("/clientes/nuevo")
     public String nuevoClienteForm(Model model) {
         model.addAttribute("nombreUsuario", getNombreUsuario());
         model.addAttribute("cliente", new Cliente());
-        return "recepcionista/cliente-form";
+        return "Recepcionista/cliente-form";
     }
 
     @PostMapping("/clientes/guardar")
@@ -128,7 +128,7 @@ public class RecepcionistaController {
             model.addAttribute("error", "Cliente no encontrado");
             return "redirect:/recepcionista/clientes";
         }
-        return "recepcionista/cliente-form";
+        return "Recepcionista/cliente-form";
     }
 
     @PostMapping("/clientes/actualizar/{id}")
@@ -165,7 +165,7 @@ public class RecepcionistaController {
             model.addAttribute("error", "Cliente no encontrado");
             return "redirect:/recepcionista/clientes";
         }
-        return "recepcionista/cliente-detalle";
+        return "Recepcionista/cliente-detalle";
     }
 
     // ============ GESTIÓN DE MASCOTAS ============
@@ -174,7 +174,7 @@ public class RecepcionistaController {
         model.addAttribute("nombreUsuario", getNombreUsuario());
         List<Mascota> mascotas = mascotaService.listarTodos();
         model.addAttribute("mascotas", mascotas != null ? mascotas : new ArrayList<>());
-        return "recepcionista/mascotas";
+        return "Recepcionista/mascotas";
     }
 
     @GetMapping("/mascotas/nuevo")
@@ -182,7 +182,7 @@ public class RecepcionistaController {
         model.addAttribute("nombreUsuario", getNombreUsuario());
         model.addAttribute("mascota", new Mascota());
         model.addAttribute("clientes", clienteService.listarTodos());
-        return "recepcionista/mascota-form";
+        return "Recepcionista/mascota-form";
     }
 
     @PostMapping("/mascotas/guardar")
@@ -208,7 +208,7 @@ public class RecepcionistaController {
             model.addAttribute("error", "Mascota no encontrada");
             return "redirect:/recepcionista/mascotas";
         }
-        return "recepcionista/mascota-form";
+        return "Recepcionista/mascota-form";
     }
 
     @PostMapping("/mascotas/actualizar/{id}")
@@ -249,7 +249,7 @@ public class RecepcionistaController {
         List<Cita> citas = citaService.obtenerCitasDelDia(fecha);
         model.addAttribute("citas", citas != null ? citas : new ArrayList<>());
         model.addAttribute("fecha", fecha);
-        return "recepcionista/citas";
+        return "Recepcionista/citas";
     }
 
     @GetMapping("/citas/nueva")
@@ -257,13 +257,14 @@ public class RecepcionistaController {
         model.addAttribute("nombreUsuario", getNombreUsuario());
         model.addAttribute("cita", new Cita());
         model.addAttribute("mascotas", mascotaService.listarTodos());
-        return "recepcionista/cita-form";
+        return "Recepcionista/cita-form";
     }
 
     @PostMapping("/citas/guardar")
     public String guardarCita(@RequestParam Long mascotaId,
             @RequestParam String fecha,
             @RequestParam String hora,
+            @RequestParam(required = false) Long veterinarioId,
             @RequestParam(required = false) String motivo,
             RedirectAttributes redirectAttributes) {
         try {
@@ -278,11 +279,70 @@ public class RecepcionistaController {
             LocalDateTime fechaHora = LocalDateTime.parse(fecha + " " + hora, formatter);
             cita.setFechaHora(fechaHora);
 
+            if (veterinarioId == null) {
+                throw new RuntimeException("Debe seleccionar un horario que tenga veterinario asignado.");
+            }
+            Usuario veterinario = usuarioRepository.findById(veterinarioId)
+                    .orElseThrow(() -> new RuntimeException("Veterinario no encontrado."));
+            cita.setVeterinario(veterinario);
+
+            com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda agendaDisponible = agendaService
+                    .buscarAgendaDisponible(fechaHora.toLocalDate(), fechaHora.toLocalTime());
+            if (agendaDisponible == null) {
+                throw new RuntimeException("El horario seleccionado no existe en la agenda o ya no está disponible.");
+            }
+            if (agendaDisponible.getVeterinario() == null || agendaDisponible.getVeterinario().getId() == null
+                    || !agendaDisponible.getVeterinario().getId().equals(veterinarioId)) {
+                throw new RuntimeException("El horario seleccionado no corresponde al veterinario asignado.");
+            }
+
             citaService.guardar(cita);
 
             redirectAttributes.addFlashAttribute("success", "Cita agendada exitosamente");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al agendar cita: " + e.getMessage());
+        }
+        return "redirect:/recepcionista/citas";
+    }
+
+    @GetMapping("/citas/editar/{id}")
+    public String editarCitaForm(@PathVariable Long id, Model model) {
+        model.addAttribute("nombreUsuario", getNombreUsuario());
+        try {
+            Cita cita = citaService.buscarPorId(id);
+            model.addAttribute("cita", cita);
+            model.addAttribute("mascotas", mascotaService.listarTodos());
+            return "Recepcionista/cita-form";
+        } catch (Exception e) {
+            model.addAttribute("error", "Cita no encontrada");
+            return "redirect:/recepcionista/citas";
+        }
+    }
+
+    @PostMapping("/citas/actualizar/{id}")
+    public String actualizarCita(@PathVariable Long id,
+            @RequestParam String fecha,
+            @RequestParam String hora,
+            @RequestParam(required = false) String motivo,
+            @RequestParam(required = false) Long veterinarioId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Cita cita = citaService.buscarPorId(id);
+            cita.setMotivo(motivo);
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            LocalDateTime fechaHora = LocalDateTime.parse(fecha + " " + hora, formatter);
+            cita.setFechaHora(fechaHora);
+
+            if (veterinarioId != null) {
+                Usuario vet = usuarioRepository.findById(veterinarioId).orElse(null);
+                cita.setVeterinario(vet);
+            }
+
+            citaService.actualizar(cita);
+            redirectAttributes.addFlashAttribute("success", "Cita actualizada exitosamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al actualizar cita: " + e.getMessage());
         }
         return "redirect:/recepcionista/citas";
     }
@@ -314,7 +374,7 @@ public class RecepcionistaController {
         List<Cita> citasDelDia = citaService.obtenerCitasDelDia(fecha);
         model.addAttribute("citas", citasDelDia != null ? citasDelDia : new ArrayList<>());
         model.addAttribute("fecha", fecha);
-        return "recepcionista/agenda";
+        return "Recepcionista/agenda";
     }
 
     // ============ GESTIÓN DE PAGOS (ACTUALIZADO) ============
@@ -342,7 +402,7 @@ public class RecepcionistaController {
             model.addAttribute("pendientes", 0L);
         }
 
-        return "recepcionista/pagos";
+        return "Recepcionista/pagos";
     }
 
     @GetMapping("/pagos/nuevo")
@@ -350,7 +410,7 @@ public class RecepcionistaController {
         model.addAttribute("nombreUsuario", getNombreUsuario());
         model.addAttribute("pago", new Pago());
         model.addAttribute("clientes", clienteService.listarTodos());
-        return "recepcionista/pago-form";
+        return "Recepcionista/pago-form";
     }
 
     @PostMapping("/pagos/guardar")
@@ -390,7 +450,7 @@ public class RecepcionistaController {
         try {
             Pago pago = pagoService.buscarPorId(id);
             model.addAttribute("pago", pago);
-            return "recepcionista/pago-detalle";
+            return "Recepcionista/pago-detalle";
         } catch (Exception e) {
             model.addAttribute("error", "Pago no encontrado");
             return "redirect:/recepcionista/pagos";
@@ -422,7 +482,7 @@ public class RecepcionistaController {
             model.addAttribute("nombreCompleto", usuario.getNombre());
         });
 
-        return "recepcionista/perfil";
+        return "Recepcionista/perfil";
     }
 
     @PostMapping("/perfil/actualizar")
@@ -453,6 +513,6 @@ public class RecepcionistaController {
         model.addAttribute("nombreUsuario", getNombreUsuario());
         List<Mascota> mascotas = mascotaService.listarTodos();
         model.addAttribute("mascotas", mascotas != null ? mascotas : new ArrayList<>());
-        return "recepcionista/diagnostico";
+        return "Recepcionista/diagnostico";
     }
 }

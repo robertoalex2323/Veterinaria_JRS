@@ -45,6 +45,13 @@
             <div class="card-body">
                 <form method="post" action="/recepcionista/agenda/horarios/generar" class="row g-3 align-items-end">
                     <input type="hidden" name="fecha" th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Veterinario</label>
+                        <select name="veterinarioId" class="form-select" required>
+                            <option value="">Seleccione...</option>
+                            <option th:each="v : ${veterinarios}" th:value="${v.id}" th:text="${v.nombre}">-</option>
+                        </select>
+                    </div>
                     <div class="col-md-3">
                         <label class="form-label fw-bold">Hora Inicio</label>
                         <input type="time" name="horaInicio" class="form-control" required value="08:00">
@@ -53,11 +60,11 @@
                         <label class="form-label fw-bold">Hora Fin</label>
                         <input type="time" name="horaFin" class="form-control" required value="20:00">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label fw-bold">Duración (min)</label>
                         <input type="number" name="duracionTurno" class="form-control" required min="5" value="30">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-12">
                         <button type="submit" class="btn btn-success w-100">
                             <i class="fas fa-plus"></i> Generar
                         </button>
@@ -78,6 +85,7 @@
                                 <th>ID</th>
                                 <th>Hora</th>
                                 <th>Duración</th>
+                                <th>Veterinario</th>
                                 <th>Disponible</th>
                                 <th class="text-end">Acción</th>
                             </tr>
@@ -86,11 +94,14 @@
                             <tr th:each="a : ${agendas}">
                                 <td th:text="${a.id}">1</td>
                                 <td>
-                                    <span th:text="${a.horaInicio != null ? #temporals.format(a.horaInicio, 'HH:mm') : '-'}">08:00</span>
+                                    <span
+                                        th:text="${a.horaInicio != null ? #temporals.format(a.horaInicio, 'HH:mm') : '-'}">08:00</span>
                                     <span class="text-muted">-</span>
-                                    <span th:text="${a.horaFin != null ? #temporals.format(a.horaFin, 'HH:mm') : '-'}">08:30</span>
+                                    <span
+                                        th:text="${a.horaFin != null ? #temporals.format(a.horaFin, 'HH:mm') : '-'}">08:30</span>
                                 </td>
                                 <td th:text="${a.duracionTurno != null ? a.duracionTurno + ' min' : '-'}">30 min</td>
+                                <td th:text="${a.veterinario != null ? a.veterinario.nombre : '-'}">-</td>
                                 <td>
                                     <span class="badge"
                                         th:classappend="${a.disponible == true} ? 'bg-success' : 'bg-danger'"
@@ -99,18 +110,21 @@
                                 <td class="text-end">
                                     <form th:if="${a.disponible == true}" method="post"
                                         th:action="@{/recepcionista/agenda/horarios/bloquear/{id}(id=${a.id})}">
-                                        <input type="hidden" name="fecha" th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}">
+                                        <input type="hidden" name="fecha"
+                                            th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Bloquear</button>
                                     </form>
                                     <form th:if="${a.disponible != true}" method="post"
                                         th:action="@{/recepcionista/agenda/horarios/liberar/{id}(id=${a.id})}">
-                                        <input type="hidden" name="fecha" th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}">
+                                        <input type="hidden" name="fecha"
+                                            th:value="${#temporals.format(fecha, 'yyyy-MM-dd')}">
                                         <button type="submit" class="btn btn-sm btn-outline-success">Liberar</button>
                                     </form>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(agendas)}">
-                                <td colspan="5" class="text-center text-muted py-4">No hay slots creados para este día.</td>
+                                <td colspan="6" class="text-center text-muted py-4">No hay slots creados para este día.
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -121,4 +135,3 @@
 </body>
 
 </html>
-

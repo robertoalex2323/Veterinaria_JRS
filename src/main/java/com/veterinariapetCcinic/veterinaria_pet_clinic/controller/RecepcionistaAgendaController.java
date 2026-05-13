@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 
 @Controller
@@ -26,9 +28,11 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 public class RecepcionistaAgendaController {
 
     private final AgendaService agendaService;
+    private final UsuarioRepository usuarioRepository;
 
-    public RecepcionistaAgendaController(AgendaService agendaService) {
+    public RecepcionistaAgendaController(AgendaService agendaService, UsuarioRepository usuarioRepository) {
         this.agendaService = agendaService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @GetMapping("/horarios")
@@ -42,9 +46,16 @@ public class RecepcionistaAgendaController {
         List<Agenda> agendas = agendaService.obtenerHorariosDelDia(fecha);
         agendas.sort(Comparator.comparing(Agenda::getHoraInicio, Comparator.nullsLast(Comparator.naturalOrder())));
 
+        List<Usuario> veterinarios = usuarioRepository.findByRolIgnoreCase("VETERINARIO").stream()
+                .filter(u -> Boolean.TRUE.equals(u.getActivo()))
+                .sorted(Comparator.comparing(Usuario::getNombre, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+
         model.addAttribute("fecha", fecha);
         model.addAttribute("agendas", agendas);
-        return "recepcionista/agenda-horarios";
+        model.addAttribute("veterinarios", veterinarios);
+        model.addAttribute("currentPage", "horarios");
+        return "Recepcionista/agenda-horarios";
     }
 
     @PostMapping("/horarios/generar")
@@ -53,6 +64,7 @@ public class RecepcionistaAgendaController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime horaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime horaFin,
             @RequestParam Integer duracionTurno,
+            @RequestParam(required = false) Long veterinarioId,
             RedirectAttributes redirectAttributes) {
         try {
             if (duracionTurno == null || duracionTurno <= 0) {
@@ -60,6 +72,15 @@ public class RecepcionistaAgendaController {
             }
             if (!horaFin.isAfter(horaInicio)) {
                 throw new IllegalArgumentException("La hora fin debe ser mayor a la hora inicio.");
+            }
+
+            Usuario veterinario = null;
+            if (veterinarioId != null) {
+                veterinario = usuarioRepository.findById(veterinarioId)
+                        .orElseThrow(() -> new IllegalArgumentException("Veterinario no encontrado."));
+                if (!"VETERINARIO".equalsIgnoreCase(veterinario.getRol())) {
+                    throw new IllegalArgumentException("El usuario seleccionado no es veterinario.");
+                }
             }
 
             LocalTime cursor = horaInicio;
@@ -76,8 +97,12 @@ public class RecepcionistaAgendaController {
                     agenda.setHoraFin(slotFin);
                     agenda.setDuracionTurno(duracionTurno);
                     agenda.setDisponible(true);
+                    agenda.setVeterinario(veterinario);
                     agendaService.guardar(agenda);
                     creados++;
+                } else if (existente.getVeterinario() == null && veterinario != null) {
+                    existente.setVeterinario(veterinario);
+                    agendaService.guardar(existente);
                 }
 
                 cursor = slotFin;
@@ -122,13 +147,19 @@ public class RecepcionistaAgendaController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         List<Map<String, String>> payload = agendaService.obtenerHorariosDisponibles(fecha).stream()
+                .filter(a -> a.getVeterinario() != null)
                 .sorted(Comparator.comparing(Agenda::getHoraInicio, Comparator.nullsLast(Comparator.naturalOrder())))
                 .map(a -> Map.of(
                         "id", String.valueOf(a.getId()),
                         "horaInicio", a.getHoraInicio() != null ? a.getHoraInicio().format(formatter) : "",
-                        "horaFin", a.getHoraFin() != null ? a.getHoraFin().format(formatter) : ""))
+                        "horaFin", a.getHoraFin() != null ? a.getHoraFin().format(formatter) : "",
+                        "veterinarioId", a.getVeterinario() != null && a.getVeterinario().getId() != null
+                                ? String.valueOf(a.getVeterinario().getId())
+                                : "",
+                        "veterinarioNombre", a.getVeterinario() != null && a.getVeterinario().getNombre() != null
+                                ? a.getVeterinario().getNombre()
+                                : ""))
                 .toList();
         return ResponseEntity.ok(payload);
     }
 }
-
