@@ -67,4 +67,31 @@ public class AgendaService {
         }
         return null;
     }
+    
+    @Transactional
+    public void generarAgendaBaseSiVacia(com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario veterinarioDefecto) {
+        if (agendaRepository.count() == 0) {
+            LocalDate hoy = LocalDate.now();
+            for (int i = 0; i < 30; i++) {
+                LocalDate fecha = hoy.plusDays(i);
+                // Excluir domingos
+                if (fecha.getDayOfWeek() == java.time.DayOfWeek.SUNDAY) continue;
+                
+                java.time.LocalTime cursor = java.time.LocalTime.of(8, 0);
+                java.time.LocalTime fin = java.time.LocalTime.of(20, 0);
+                
+                while (cursor.plusMinutes(30).compareTo(fin) <= 0) {
+                    Agenda agenda = new Agenda();
+                    agenda.setFecha(fecha);
+                    agenda.setHoraInicio(cursor);
+                    agenda.setHoraFin(cursor.plusMinutes(30));
+                    agenda.setDuracionTurno(30);
+                    agenda.setDisponible(true);
+                    agenda.setVeterinario(veterinarioDefecto);
+                    agendaRepository.save(agenda);
+                    cursor = cursor.plusMinutes(30);
+                }
+            }
+        }
+    }
 }

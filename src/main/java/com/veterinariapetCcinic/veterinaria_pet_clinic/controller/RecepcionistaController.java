@@ -58,6 +58,9 @@ public class RecepcionistaController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
+
     private String getNombreUsuario() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null ? auth.getName() : "Recepcionista";
@@ -66,20 +69,36 @@ public class RecepcionistaController {
     // ============ DASHBOARD ============
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
-        model.addAttribute("nombreUsuario", getNombreUsuario());
+        String username = getNombreUsuario();
+        model.addAttribute("nombreUsuario", username);
+        
+        // Cargar datos del usuario para el nombre completo
+        usuarioRepository.findByUsername(username).ifPresent(usuario -> {
+            model.addAttribute("nombreCompleto", usuario.getNombre());
+        });
 
-        model.addAttribute("totalClientes", clienteService.contarClientes());
-        model.addAttribute("totalMascotas", mascotaService.contarMascotas());
-        model.addAttribute("citasHoy", citaService.contarCitasHoy());
+        try {
+            model.addAttribute("totalClientes", clienteService.contarClientes());
+            model.addAttribute("totalMascotas", mascotaService.contarMascotas());
+            model.addAttribute("citasHoy", citaService.contarCitasHoy());
 
-        Double ingresosHoy = pagoService.getTotalPagosDelDia();
-        model.addAttribute("ingresosHoy", ingresosHoy != null ? ingresosHoy : 0.0);
+            Double ingresosHoy = pagoService.getTotalPagosDelDia();
+            model.addAttribute("ingresosHoy", ingresosHoy != null ? ingresosHoy : 0.0);
 
-        List<Cita> proximasCitas = citaService.obtenerCitasDelDia(LocalDate.now());
-        model.addAttribute("proximasCitas", proximasCitas != null ? proximasCitas : new ArrayList<>());
+            List<Cita> proximasCitas = citaService.obtenerCitasDelDia(LocalDate.now());
+            model.addAttribute("proximasCitas", proximasCitas != null ? proximasCitas : new ArrayList<>());
 
-        List<Pago> ultimosPagos = pagoService.obtenerPagosDelDia();
-        model.addAttribute("ultimosPagos", ultimosPagos != null ? ultimosPagos : new ArrayList<>());
+            List<Pago> ultimosPagos = pagoService.obtenerPagosDelDia();
+            model.addAttribute("ultimosPagos", ultimosPagos != null ? ultimosPagos : new ArrayList<>());
+        } catch (Exception e) {
+            model.addAttribute("error", "Error al cargar datos del dashboard: " + e.getMessage());
+            model.addAttribute("totalClientes", 0L);
+            model.addAttribute("totalMascotas", 0L);
+            model.addAttribute("citasHoy", 0L);
+            model.addAttribute("ingresosHoy", 0.0);
+            model.addAttribute("proximasCitas", new ArrayList<>());
+            model.addAttribute("ultimosPagos", new ArrayList<>());
+        }
 
         return "Recepcionista/dashboard";
     }
@@ -498,6 +517,13 @@ public class RecepcionistaController {
 
             usuario.setNombre(nombre);
             usuario.setEmail(email);
+
+            if (newPassword != null && !newPassword.trim().isEmpty()) {
+                if (currentPassword == null || !passwordEncoder.matches(currentPassword, usuario.getPassword())) {
+                    throw new RuntimeException("La contraseña actual es incorrecta.");
+                }
+                usuario.setPassword(passwordEncoder.encode(newPassword));
+            }
 
             usuarioRepository.save(usuario);
             redirectAttributes.addFlashAttribute("success", "Perfil actualizado correctamente");

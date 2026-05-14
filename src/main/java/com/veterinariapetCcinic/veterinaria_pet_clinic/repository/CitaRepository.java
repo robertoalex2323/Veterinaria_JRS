@@ -36,4 +36,7 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     
     @Query("SELECT c FROM Cita c WHERE c.estado = 'AGENDADA' AND DATE(c.fechaHora) = :fecha")
     List<Cita> findCitasPendientesByFecha(@Param("fecha") LocalDate fecha);
+    
+    @Query("SELECT c FROM Cita c WHERE c.estado = 'AGENDADA' AND DATE(c.fechaHora) = :fecha AND c.recordatorioEnviado = false")
+    List<Cita> findCitasPendientesParaRecordatorio(@Param("fecha") LocalDate fecha);
 }

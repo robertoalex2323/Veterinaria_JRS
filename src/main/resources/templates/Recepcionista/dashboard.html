@@ -146,7 +146,7 @@
                                                     th:href="@{/recepcionista/citas/editar/{id}(id=${cita.id})}"><i
                                                         class="fas fa-edit"></i> Editar</a></li>
                                             <li><a class="dropdown-item text-danger" href="javascript:void(0)"
-                                                    th:onclick="cancelarCita(${cita.id})"><i class="fas fa-times"></i>
+                                                    th:onclick="'cancelarCita(' + ${cita.id} + ')'"><i class="fas fa-times"></i>
                                                     Cancelar</a></li>
                                         </ul>
                                     </div>

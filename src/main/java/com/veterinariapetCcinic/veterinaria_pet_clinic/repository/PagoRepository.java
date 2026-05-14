@@ -22,10 +22,10 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     @Query("SELECT p FROM Pago p WHERE p.fechaPago BETWEEN :inicio AND :fin")
     List<Pago> findPagosByFechaRange(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
     
-    @Query("SELECT COALESCE(SUM(p.monto), 0) FROM Pago p WHERE p.estado = 'PAGADO'")
+    @Query("SELECT COALESCE(SUM(p.monto), 0.0) FROM Pago p WHERE p.estado = 'PAGADO'")
     Double sumTotalPagos();
     
-    @Query("SELECT COALESCE(SUM(p.monto), 0) FROM Pago p WHERE p.estado = 'PAGADO' AND p.fechaPago BETWEEN :inicio AND :fin")
+    @Query("SELECT COALESCE(SUM(p.monto), 0.0) FROM Pago p WHERE p.estado = 'PAGADO' AND p.fechaPago BETWEEN :inicio AND :fin")
     Double sumPagosByFechaRange(@Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
     
     long countByEstado(String estado);

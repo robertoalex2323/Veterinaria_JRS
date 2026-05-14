@@ -46,6 +46,13 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
+        <!-- Twilio para WhatsApp -->
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>9.14.0</version>
+        </dependency>
+
         <!-- Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
