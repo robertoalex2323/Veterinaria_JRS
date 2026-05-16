@@ -26,56 +26,70 @@ public class DataInitializer implements CommandLineRunner {
         if (!usuarioRepository.existsByUsername("admin")) {
             Usuario admin = new Usuario();
             admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("admin_pet_clinic"));
-            admin.setNombre("Administrador Principal");
+            admin.setPassword(passwordEncoder.encode("password123"));
+            admin.setNombre("Administrador");
             admin.setEmail("admin@veterinaria.com");
             admin.setRol("ADMIN");
             admin.setActivo(true);
             admin.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(admin);
-            System.out.println("✅ Usuario ADMIN creado exitosamente");
+            System.out.println("✅ Usuario ADMIN creado: admin / password123");
         }
 
-        // 2. VETERINARIO
-        if (!usuarioRepository.existsByUsername("veterinario")) {
+        // 2. VETERINARIO 1
+        if (!usuarioRepository.existsByUsername("vet_juan")) {
             Usuario vet = new Usuario();
-            vet.setUsername("veterinario");
-            vet.setPassword(passwordEncoder.encode("veterinaria_pet_clinic"));
-            vet.setNombre("Dra. Katherine Alberca");
-            vet.setEmail("katyalb@petclinic.com");
+            vet.setUsername("vet_juan");
+            vet.setPassword(passwordEncoder.encode("password123"));
+            vet.setNombre("Juan García");
+            vet.setEmail("juan@veterinaria.com");
             vet.setRol("VETERINARIO");
             vet.setActivo(true);
             vet.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(vet);
-            System.out.println("✅ Usuario VETERINARIO creado exitosamente");
+            System.out.println("✅ Usuario VETERINARIO creado: vet_juan / password123");
         }
 
-        // 3. RECEPCIONISTA
-        if (!usuarioRepository.existsByUsername("recepcionista")) {
+        // 3. VETERINARIO 2
+        if (!usuarioRepository.existsByUsername("vet_maria")) {
+            Usuario vet2 = new Usuario();
+            vet2.setUsername("vet_maria");
+            vet2.setPassword(passwordEncoder.encode("password123"));
+            vet2.setNombre("María López");
+            vet2.setEmail("maria@veterinaria.com");
+            vet2.setRol("VETERINARIO");
+            vet2.setActivo(true);
+            vet2.setFechaCreacion(LocalDateTime.now());
+            usuarioRepository.save(vet2);
+            System.out.println("✅ Usuario VETERINARIO creado: vet_maria / password123");
+        }
+
+        // 4. RECEPCIONISTA 1
+        if (!usuarioRepository.existsByUsername("recv_carlos")) {
             Usuario recep = new Usuario();
-            recep.setUsername("recepcionista");
-            recep.setPassword(passwordEncoder.encode("recep_pet_clinic"));
-            recep.setNombre("Roberto Anton");
-            recep.setEmail("robertoanton@petclinic.com");
+            recep.setUsername("recv_carlos");
+            recep.setPassword(passwordEncoder.encode("password123"));
+            recep.setNombre("Carlos Rodríguez");
+            recep.setEmail("carlos@veterinaria.com");
             recep.setRol("RECEPCIONISTA");
             recep.setActivo(true);
             recep.setFechaCreacion(LocalDateTime.now());
             usuarioRepository.save(recep);
-            System.out.println("✅ Usuario RECEPCIONISTA creado exitosamente");
+            System.out.println("✅ Usuario RECEPCIONISTA creado: recv_carlos / password123");
         }
 
-        // 4. VENDEDOR
-        if (!usuarioRepository.existsByUsername("vendedor")) {
-            Usuario vendedor = new Usuario();
-            vendedor.setUsername("vendedor");
-            vendedor.setPassword(passwordEncoder.encode("vendedor_pet_clinic"));
-            vendedor.setNombre("Alessandro Llacshuanga");
-            vendedor.setEmail("Alessandro_Llacshuanga@veterinaria.com");
-            vendedor.setRol("VENDEDOR");
-            vendedor.setActivo(true);
-            vendedor.setFechaCreacion(LocalDateTime.now());
-            usuarioRepository.save(vendedor);
-            System.out.println("✅ Usuario VENDEDOR creado exitosamente");
+        // 5. RECEPCIONISTA 2
+        if (!usuarioRepository.existsByUsername("recv_ana")) {
+            Usuario recep2 = new Usuario();
+            recep2.setUsername("recv_ana");
+            recep2.setPassword(passwordEncoder.encode("password123"));
+            recep2.setNombre("Ana Martínez");
+            recep2.setEmail("ana@veterinaria.com");
+            recep2.setRol("RECEPCIONISTA");
+            recep2.setActivo(true);
+            recep2.setFechaCreacion(LocalDateTime.now());
+            usuarioRepository.save(recep2);
+            System.out.println("✅ Usuario RECEPCIONISTA creado: recv_ana / password123");
         }
 
         // 5. FARMACÉUTICO

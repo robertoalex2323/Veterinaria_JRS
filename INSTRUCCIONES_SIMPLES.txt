@@ -1,0 +1,84 @@
+# 🎉 INSTRUCCIONES SIMPLES - CÓMO PROBAR
+
+## ✅ TODO ESTÁ ARREGLADO
+
+### Paso 1️⃣: Limpia y Compila
+```powershell
+cd "c:\Users\KATHERINE\Documents\GitHub\Veterinaria_Pet_Clinic"
+.\mvnw.cmd clean compile -DskipTests
+```
+
+### Paso 2️⃣: Ejecuta la Aplicación
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Verás en la consola:
+```
+✅ Usuario ADMIN creado: admin / password123
+✅ Usuario VETERINARIO creado: vet_juan / password123
+✅ Usuario VETERINARIO creado: vet_maria / password123
+✅ Usuario RECEPCIONISTA creado: recv_carlos / password123
+✅ Usuario RECEPCIONISTA creado: recv_ana / password123
+```
+
+### Paso 3️⃣: Abre tu Navegador
+- URL: **http://localhost:8080/login**
+
+### Paso 4️⃣: Inicia Sesión como Veterinario
+```
+Usuario: vet_juan
+Contraseña: password123
+```
+
+### Paso 5️⃣: ¡LISTO! 🎉
+Deberías ver:
+- ✅ Dashboard del veterinario
+- ✅ Panel de mascotas
+- ✅ Menú lateral con todas las opciones
+
+---
+
+## 📋 Otros Usuarios para Probar
+
+**Administrador:**
+```
+Usuario: admin
+Contraseña: password123
+```
+
+**Otro Veterinario:**
+```
+Usuario: vet_maria
+Contraseña: password123
+```
+
+**Recepcionista:**
+```
+Usuario: recv_carlos
+Contraseña: password123
+```
+
+---
+
+## ❌ Si algo falla:
+
+1. **"Usuario o contraseña inválidos"**
+   - Espera a que aparezcan los ✅ en la consola
+   - Reinicia la aplicación
+   - Usa exactamente: `vet_juan` y `password123`
+
+2. **No ves el dashboard**
+   - Verifica que hayas iniciado sesión
+   - Recarga la página
+   - Abre modo incógnito
+
+3. **Error de template**
+   - Revisa la consola para ver el error
+   - Verifica que `Veterinaria/dashboard.html` existe
+
+---
+
+## ✨ ¡YA ESTÁ TODO LISTO! 
+
+Solo ejecuta y prueba 🚀

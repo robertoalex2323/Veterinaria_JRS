@@ -1,0 +1,127 @@
+# 🚀 CONFIGURACIÓN NEON - QUICK START
+
+## Credenciales de Neon
+```
+Host: ep-cool-shape-aqja9v6c-pooler.c-8.us-east-1.aws.neon.tech
+Database: neondb
+User: neondb_owner
+Password: npg_niRekK7UZ9mD
+Port: 5432
+SSL: Required
+Channel Binding: Required
+```
+
+## Connection String (PostgreSQL)
+```
+postgresql://neondb_owner:npg_niRekK7UZ9mD@ep-cool-shape-aqja9v6c-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+```
+
+## Connection String (JDBC - Spring Boot)
+```
+jdbc:postgresql://ep-cool-shape-aqja9v6c-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+```
+
+---
+
+## ⚡ 3 PASOS RÁPIDOS
+
+### 1️⃣ Ejecuta el Script SQL
+- Abre: https://console.neon.tech
+- Ve a: SQL Editor
+- Copia el contenido de `NEON_DATABASE_SETUP.sql`
+- Pega y ejecuta
+
+### 2️⃣ La aplicación ya está configurada
+- El archivo `application.properties` ya tiene las credenciales de Neon
+- **NO necesitas hacer cambios manualmente**
+
+### 3️⃣ Ejecuta la app
+```powershell
+.\mvnw.cmd clean install
+.\mvnw.cmd spring-boot:run
+```
+
+---
+
+## 📋 Tablas Creadas (12 Total)
+
+| # | Tabla | Registros Iniciales |
+|---|-------|-------------------|
+| 1 | usuarios | 5 usuarios (admin, 2 vets, 2 recepcionistas) |
+| 2 | clientes | - |
+| 3 | mascotas | - |
+| 4 | vacunas | 6 vacunas predeterminadas |
+| 5 | consultas | - |
+| 6 | signos_vitales | - |
+| 7 | seguimientos | - |
+| 8 | vacunas_aplicadas | - |
+| 9 | alertas_criticas | - |
+| 10 | citas | - |
+| 11 | pagos | - |
+| 12 | agenda | - |
+
+---
+
+## 👤 Usuarios de Prueba
+
+```
+admin           / password123  (ADMIN)
+vet_juan        / password123  (VETERINARIO)
+vet_maria       / password123  (VETERINARIO)
+recv_carlos     / password123  (RECEPCIONISTA)
+recv_ana        / password123  (RECEPCIONISTA)
+```
+
+---
+
+## 🔗 Links Útiles
+
+- **Neon Console**: https://console.neon.tech
+- **Neon Documentation**: https://neon.tech/docs
+- **Mi Base de Datos**: https://console.neon.tech (inicia sesión y ve a tu proyecto)
+
+---
+
+## ✅ Verificar que Todo Funciona
+
+### En la consola después de ejecutar la app, deberías ver:
+
+```
+HikariPool-1 - Starting...
+HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@...
+HikariPool-1 - Start completed
+Initialized JPA EntityManagerFactory
+Tomcat started on port 8080
+Started VeterinariaPetClinicApplication in X.XXX seconds
+```
+
+### Accede a:
+- http://localhost:8080/recepcionista/dashboard
+
+---
+
+## 🛑 Problemas Comunes
+
+**No conecta a la BD:**
+- Verifica que Neon esté activo (console.neon.tech)
+- Verifica la contraseña en `application.properties`
+- Asegúrate de que `?sslmode=require` esté en la URL
+
+**Las tablas no existen:**
+- Ejecuta nuevamente el script SQL `NEON_DATABASE_SETUP.sql` en Neon Console
+
+**Error de login:**
+- Usa los usuarios del script arriba
+- Contraseña predeterminada: `password123`
+
+---
+
+## 📝 Archivos Importantes
+
+- `NEON_DATABASE_SETUP.sql` - Script para crear todas las tablas
+- `NEON_SETUP_GUIDE.md` - Guía completa con capturas
+- `src/main/resources/application.properties` - Configuración de conexión (ya actualizado)
+
+---
+
+**¡Listo para usar Neon!** 🎉

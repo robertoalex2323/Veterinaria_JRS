@@ -49,6 +49,9 @@ public class SecurityConfig {
                         // Solo ADMIN y ADMINISTRADOR pueden acceder a estas rutas
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "ADMINISTRADOR")
 
+                        // Solo VETERINARIO puede acceder a estas rutas
+                        .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
+
                         // Recursos públicos
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
                         .requestMatchers("/login").permitAll()
@@ -73,8 +76,13 @@ public class SecurityConfig {
                                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN")
                                             || authority.getAuthority().equals("ROLE_ADMINISTRADOR"));
 
+                            boolean esVeterinario = authentication.getAuthorities().stream()
+                                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_VETERINARIO"));
+
                             if (esAdmin) {
                                 response.sendRedirect("/admin/dashboard");
+                            } else if (esVeterinario) {
+                                response.sendRedirect("/veterinaria/dashboard");
                             } else {
                                 response.sendRedirect("/recepcionista/dashboard");
                             }

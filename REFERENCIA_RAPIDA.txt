@@ -1,0 +1,60 @@
+# 🎯 REFERENCIA RÁPIDA
+
+## Ejecuta Esto:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+## Login con esto:
+
+| Campo | Valor |
+|-------|-------|
+| Usuario | vet_juan |
+| Contraseña | password123 |
+
+## Irás a:
+
+```
+http://localhost:8080/veterinaria/dashboard
+```
+
+## Verás:
+
+- ✅ Panel Veterinario
+- ✅ Mascotas
+- ✅ Citas
+- ✅ Agenda
+- ✅ Historial
+- ✅ Todo el menú completo
+
+---
+
+## Otros Usuarios:
+
+```
+admin           / password123 (Admin)
+vet_maria       / password123 (Veterinario)
+recv_carlos     / password123 (Recepcionista)
+recv_ana        / password123 (Recepcionista)
+```
+
+---
+
+## Si no funciona:
+
+1. **Cierra la app** (Ctrl+C)
+2. **Borra la BD** (si usas H2)
+3. **Ejecuta nuevamente**: `.\mvnw.cmd spring-boot:run`
+4. **Espera** a que veas los ✅ en consola
+5. **Intenta login** nuevamente
+
+---
+
+## ¿Qué cambié?
+
+✅ DataInitializer.java → Todos los usuarios con password123
+✅ SecurityConfig.java → Rutas protegidas correctamente  
+✅ VeterinariaController.java → Templates en carpeta correcta
+
+**¡LISTO! 🚀**

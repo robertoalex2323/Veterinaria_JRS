@@ -12,54 +12,54 @@ public class VeterinariaController {
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         model.addAttribute("currentPage", "dashboard");
-        return "veterinaria/dashboard";
+        return "Veterinaria/dashboard";
     }
 
     @GetMapping("/pacientes")
     public String pacientes(Model model) {
         model.addAttribute("currentPage", "pacientes");
-        return "veterinaria/pacientes";
+        return "Veterinaria/pacientes";
     }
 
     @GetMapping("/consultas")
     public String consultas(Model model) {
         model.addAttribute("currentPage", "consultas");
-        return "veterinaria/consultas";
+        return "Veterinaria/consultas";
     }
 
     @GetMapping("/agenda")
     public String agenda(Model model) {
         model.addAttribute("currentPage", "agenda");
-        return "veterinaria/agenda";
+        return "Veterinaria/agenda";
     }
 
     @GetMapping("/historial")
     public String historial(Model model) {
         model.addAttribute("currentPage", "historial");
-        return "veterinaria/historial";
+        return "Veterinaria/historial";
     }
 
     @GetMapping("/vacunas")
     public String vacunas(Model model) {
         model.addAttribute("currentPage", "vacunas");
-        return "veterinaria/vacunas";
+        return "Veterinaria/vacunas";
     }
 
     @GetMapping("/alertas")
     public String alertas(Model model) {
         model.addAttribute("currentPage", "alertas");
-        return "veterinaria/alertas";
+        return "Veterinaria/alertas";
     }
 
     @GetMapping("/diagnostico-ia")
     public String diagnosticoIA(Model model) {
         model.addAttribute("currentPage", "diagnostico");
-        return "veterinaria/diagnostico-ia";
+        return "Veterinaria/diagnostico-ia";
     }
 
     @GetMapping("/perfil")
     public String perfil(Model model) {
         model.addAttribute("currentPage", "perfil");
-        return "veterinaria/perfil";
+        return "Veterinaria/perfil";
     }
 }
