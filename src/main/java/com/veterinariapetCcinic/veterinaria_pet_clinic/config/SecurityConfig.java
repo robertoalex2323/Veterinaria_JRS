@@ -15,17 +15,31 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
+
+            // DESACTIVAR CSRF
+            .csrf(csrf -> csrf.disable())
+
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/css/**", "/js/**", "/Imagen/**").permitAll()
-                .requestMatchers("/login").permitAll()
+                .requestMatchers(
+                        "/css/**",
+                        "/js/**",
+                        "/Imagen/**",
+                        "/login"
+                ).permitAll()
+
+                .requestMatchers("/api/**").permitAll()
+
                 .anyRequest().authenticated()
             )
+
             .formLogin(form -> form
                 .loginPage("/login")
                 .defaultSuccessUrl("/farmaceutico", true)
                 .permitAll()
             )
+
             .logout(logout -> logout
                 .logoutSuccessUrl("/login?logout")
                 .permitAll()
@@ -41,9 +55,10 @@ public class SecurityConfig {
 
     @Bean
     public InMemoryUserDetailsManager userDetailsService() {
+
         UserDetails farmaceutico = User.builder()
             .username("admin")
-            .password(passwordEncoder().encode("admin123"))  // 🔒 Encriptada con BCrypt
+            .password(passwordEncoder().encode("admin123"))
             .roles("FARMACEUTICO")
             .build();
 
