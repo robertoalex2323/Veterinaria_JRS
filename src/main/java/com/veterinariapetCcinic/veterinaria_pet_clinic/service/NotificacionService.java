@@ -3,19 +3,13 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.service;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.type.PhoneNumber;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
-
-import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,25 +29,7 @@ public class NotificacionService {
     @Autowired
     private CitaRepository citaRepository;
 
-    @Value("${twilio.account-sid:}")
-    private String twilioAccountSid;
-
-    @Value("${twilio.auth-token:}")
-    private String twilioAuthToken;
-
-    @Value("${twilio.whatsapp-number:whatsapp:+14155238886}")
-    private String twilioWhatsappNumber;
-
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
-    @PostConstruct
-    public void initTwilio() {
-        if (twilioAccountSid != null && !twilioAccountSid.isEmpty() &&
-                twilioAuthToken != null && !twilioAuthToken.isEmpty()) {
-            Twilio.init(twilioAccountSid, twilioAuthToken);
-            log.info("📱 Twilio WhatsApp inicializado.");
-        }
-    }
 
     public void enviarConfirmacionCita(Cita cita) {
         String mensaje = String.format("""
@@ -67,51 +43,14 @@ public class NotificacionService {
                 cita.getMascota().getNombre(),
                 cita.getMotivo());
 
-        log.info("📧 Enviando SMS/Email a: {}", cita.getMascota().getCliente().getTelefono());
+        Cliente cliente = cita.getMascota().getCliente();
+        log.info("📧 Enviando notificación a: {}", cliente.getTelefono());
         log.info("📝 Mensaje:\n{}", mensaje);
 
         // Enviar Correo Electrónico
-        String emailDestino = cita.getMascota().getCliente().getEmail();
-        if (emailDestino != null && !emailDestino.trim().isEmpty() && mailSender != null) {
-            try {
-                org.springframework.mail.SimpleMailMessage mailMessage = new org.springframework.mail.SimpleMailMessage();
-                mailMessage.setTo(emailDestino);
-                mailMessage.setSubject("Confirmación de Cita Veterinaria - " + cita.getMascota().getNombre());
-                mailMessage.setText(mensaje);
-                mailSender.send(mailMessage);
-                log.info("✅ Correo enviado exitosamente a: {}", emailDestino);
-            } catch (Exception e) {
-                log.error("❌ Error al enviar correo a {}: {}", emailDestino, e.getMessage());
-            }
-        } else {
-            log.warn("⚠️ El cliente no tiene correo registrado o el servicio de correo no está configurado.");
-        }
-
-        // Enviar WhatsApp
-        if (twilioAccountSid != null && !twilioAccountSid.isEmpty() && twilioAuthToken != null
-                && !twilioAuthToken.isEmpty()) {
-            try {
-                String telefonoCliente = cita.getMascota().getCliente().getTelefono();
-                if (!telefonoCliente.startsWith("+")) {
-                    telefonoCliente = "+51" + telefonoCliente;
-                }
-
-                String numeroDestino = "whatsapp:" + telefonoCliente;
-
-                com.twilio.rest.api.v2010.account.Message twilioMessage = com.twilio.rest.api.v2010.account.Message
-                        .creator(
-                                new com.twilio.type.PhoneNumber(numeroDestino),
-                                new com.twilio.type.PhoneNumber(twilioWhatsappNumber),
-                                mensaje)
-                        .create();
-
-                log.info("✅ WhatsApp enviado exitosamente a {}. SID: {}", telefonoCliente, twilioMessage.getSid());
-            } catch (Exception e) {
-                log.error("❌ Error al enviar WhatsApp: {}", e.getMessage());
-            }
-        } else {
-            log.warn("⚠️ Twilio no configurado. No se envió WhatsApp.");
-        }
+        enviarEmail(cliente.getEmail(),
+                "Confirmación de Cita Veterinaria - " + cita.getMascota().getNombre(),
+                mensaje);
 
         log.info("--- Notificación enviada ---\n");
     }
@@ -121,11 +60,17 @@ public class NotificacionService {
                 ⚠️ Su cita para el %s ha sido CANCELADA.
                 🐕 Mascota: %s
 
-                Para reagendar, comuníquese al 123-456-789.""",
+                Para reagendar, comuníquese al +51 918 470 481.""",
                 cita.getFechaHora().format(FORMATTER),
                 cita.getMascota().getNombre());
-        log.info("📧 Notificación de cancelación enviada a: {}", cita.getMascota().getCliente().getTelefono());
+
+        Cliente cliente = cita.getMascota().getCliente();
+        log.info("📧 Notificación de cancelación para: {}", cliente.getTelefono());
         log.info("📝 Mensaje:\n{}", mensaje);
+
+        enviarEmail(cliente.getEmail(),
+                "Cancelación de Cita Veterinaria - " + cita.getMascota().getNombre(),
+                mensaje);
     }
 
     public void enviarRecordatorioCita(Cita cita) {
@@ -135,76 +80,63 @@ public class NotificacionService {
                 cita.getFechaHora().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
                 cita.getFechaHora().toLocalTime(),
                 cita.getMascota().getNombre());
-        log.info("📧 Recordatorio enviado a (consola/SMS): {}", cita.getMascota().getCliente().getTelefono());
+
+        Cliente cliente = cita.getMascota().getCliente();
+        log.info("📧 Recordatorio para: {}", cliente.getTelefono());
         log.info("📝 Mensaje:\n{}", mensaje);
 
-        String emailDestino = cita.getMascota().getCliente().getEmail();
-        if (emailDestino != null && !emailDestino.trim().isEmpty() && mailSender != null) {
+        enviarEmail(cliente.getEmail(),
+                "Recordatorio de Cita Veterinaria - " + cita.getMascota().getNombre(),
+                mensaje);
+    }
+
+    private void enviarEmail(String email, String asunto, String mensaje) {
+        if (email != null && !email.trim().isEmpty() && mailSender != null) {
             try {
                 SimpleMailMessage mailMessage = new SimpleMailMessage();
-                mailMessage.setTo(emailDestino);
-                mailMessage.setSubject("Recordatorio de Cita Veterinaria - " + cita.getMascota().getNombre());
+                mailMessage.setTo(email);
+                mailMessage.setSubject(asunto);
                 mailMessage.setText(mensaje);
                 mailSender.send(mailMessage);
-                log.info("✅ Correo enviado exitosamente a: {}", emailDestino);
+                log.info("✅ Correo enviado a: {}", email);
             } catch (Exception e) {
-                log.error("❌ Error al enviar correo a {}: {}", emailDestino, e.getMessage());
+                log.error("❌ Error al enviar correo a {}: {}", email, e.getMessage());
             }
         } else {
-            log.warn("⚠️ El cliente no tiene correo registrado o el servicio de correo no está configurado.");
-        }
-
-        // ENVÍO POR WHATSAPP (TWILIO)
-        if (twilioAccountSid != null && !twilioAccountSid.isEmpty() && twilioAuthToken != null
-                && !twilioAuthToken.isEmpty()) {
-            try {
-                // Formateamos el número (Asumimos que el número del cliente requiere código de
-                // país, ejemplo +51 para Perú)
-                // Si tu base de datos ya tiene el "+51", puedes omitir agregarlo.
-                String telefonoCliente = cita.getMascota().getCliente().getTelefono();
-                if (!telefonoCliente.startsWith("+")) {
-                    telefonoCliente = "+51" + telefonoCliente; // <-- CAMBIA ESTO por tu código de país
-                }
-
-                String numeroDestino = "whatsapp:" + telefonoCliente;
-
-                Message twilioMessage = Message.creator(
-                        new PhoneNumber(numeroDestino),
-                        new PhoneNumber(twilioWhatsappNumber),
-                        mensaje).create();
-
-                log.info("✅ WhatsApp enviado exitosamente a {}. SID: {}", telefonoCliente, twilioMessage.getSid());
-            } catch (Exception e) {
-                log.error("❌ Error al enviar WhatsApp: {}", e.getMessage());
+            if (email == null || email.trim().isEmpty()) {
+                log.warn("⚠️ Cliente sin email registrado");
             }
-        } else {
-            log.warn("⚠️ Twilio no configurado. No se envió WhatsApp.");
+            if (mailSender == null) {
+                log.warn("⚠️ Servicio de correo no configurado");
+            }
         }
     }
 
-    @Scheduled(cron = "0 0 8 * * ?") // Ejecuta todos los días a las 8:00 AM
+    @Scheduled(cron = "0 0 8 * * ?")
     @Transactional
     public void programarRecordatoriosManana() {
         LocalDate manana = LocalDate.now().plusDays(1);
-        log.info("⏳ Iniciando proceso de envío de recordatorios para citas de mañana ({})...", manana);
+        log.info("⏳ Enviando recordatorios para citas de mañana ({})...", manana);
 
         List<Cita> citasManana = citaRepository.findCitasPendientesParaRecordatorio(manana);
 
         if (citasManana.isEmpty()) {
-            log.info("✅ No hay citas pendientes para recordar mañana.");
+            log.info("✅ No hay citas para recordar mañana.");
             return;
         }
 
+        int exitosos = 0;
         for (Cita cita : citasManana) {
             try {
                 enviarRecordatorioCita(cita);
                 cita.setRecordatorioEnviado(true);
                 citaRepository.save(cita);
+                exitosos++;
             } catch (Exception e) {
-                log.error("❌ Error al enviar recordatorio a la cita {}: {}", cita.getId(), e.getMessage());
+                log.error("❌ Error en recordatorio cita {}: {}", cita.getId(), e.getMessage());
             }
         }
-        log.info("✅ Finalizó el envío de recordatorios. Total procesados: {}", citasManana.size());
+        log.info("✅ Recordatorios enviados: {}/{}", exitosos, citasManana.size());
     }
 
     public void enviarNotificacionVeterinario(Cita cita) {
@@ -237,6 +169,8 @@ public class NotificacionService {
                 mensaje);
         log.info("📧 Enviando informe a: {} / {}", cliente.getTelefono(), cliente.getEmail());
         log.info("📝 Mensaje:\n{}", informe);
+
+        enviarEmail(cliente.getEmail(), "Informe Veterinario", informe);
     }
 
     public void enviarConfirmacionPago(Cliente cliente, Double monto, String metodoPago) {
@@ -251,7 +185,9 @@ public class NotificacionService {
                 cliente.getNombre(),
                 monto,
                 metodoPago);
-        log.info("📧 Confirmación de pago enviada a: {}", cliente.getTelefono());
+        log.info("📧 Confirmación de pago para: {}", cliente.getTelefono());
         log.info("📝 Mensaje:\n{}", mensaje);
+
+        enviarEmail(cliente.getEmail(), "Confirmación de Pago", mensaje);
     }
 }

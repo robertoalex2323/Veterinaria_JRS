@@ -71,7 +71,7 @@ public class RecepcionistaController {
     public String dashboard(Model model) {
         String username = getNombreUsuario();
         model.addAttribute("nombreUsuario", username);
-        
+
         // Cargar datos del usuario para el nombre completo
         usuarioRepository.findByUsername(username).ifPresent(usuario -> {
             model.addAttribute("nombreCompleto", usuario.getNombre());
