@@ -62,5 +62,13 @@ public class VeterinariaController {
         model.addAttribute("currentPage", "perfil");
         return "Veterinaria/perfil";
     }
+
+    @GetMapping("/settings")
+    public String settings(Model model) {
+        model.addAttribute("currentPage", "settings");
+        // Si no existe todavía la vista, al menos el endpoint ya no dará 404/403 por ruta.
+        return "Veterinaria/settings";
+    }
 }
+
 
