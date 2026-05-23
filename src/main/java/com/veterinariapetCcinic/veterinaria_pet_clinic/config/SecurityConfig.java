@@ -52,6 +52,10 @@ public class SecurityConfig {
                         // Recursos públicos
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
                         .requestMatchers("/login").permitAll()
+                        // Solo VETERINARIO puede acceder a estas rutas
+                        .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
+
+                       
 
                         // Solo RECEPCIONISTA puede acceder a estas rutas
                         .requestMatchers("/recepcionista/**").hasRole("RECEPCIONISTA")
@@ -65,16 +69,20 @@ public class SecurityConfig {
 
                         // Cualquier otra ruta requiere autenticación
                         .anyRequest().authenticated())
-
-                .formLogin(form -> form
+                    .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler((request, response, authentication) -> {
                             boolean esAdmin = authentication.getAuthorities().stream()
                                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN")
                                             || authority.getAuthority().equals("ROLE_ADMINISTRADOR"));
 
+                            boolean esVeterinario = authentication.getAuthorities().stream()
+                                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_VETERINARIO"));
+
                             if (esAdmin) {
                                 response.sendRedirect("/admin/dashboard");
+                            } else if (esVeterinario) {
+                                response.sendRedirect("/veterinaria/dashboard");
                             } else {
                                 response.sendRedirect("/recepcionista/dashboard");
                             }
