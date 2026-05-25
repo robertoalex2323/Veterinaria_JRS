@@ -1,133 +1,174 @@
 document.addEventListener("DOMContentLoaded", () => {
-    cargarDashboard();
-    cargarPacientesDemo();
+    const lista = document.getElementById("listaPacientes");
+    const pacientes = Array.from(document.querySelectorAll(".patient-item"));
+    const buscador = document.getElementById("buscarPacienteDashboard");
+    const chips = Array.from(document.querySelectorAll(".chip[data-especie]"));
+
+    if (!lista || pacientes.length === 0) {
+        return;
+    }
+
+    pacientes.forEach(item => {
+        item.addEventListener("click", () => seleccionarPaciente(item));
+    });
+
+    if (buscador) {
+        buscador.addEventListener("input", aplicarFiltros);
+    }
+
+    chips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            chips.forEach(c => c.classList.remove("active"));
+            chip.classList.add("active");
+            aplicarFiltros();
+        });
+    });
+
+    seleccionarPaciente(pacientes[0]);
 });
 
-function cargarDashboard() {
-    // Datos demo mientras conectas backend
-    document.getElementById("atendidosHoy").textContent = 24;
-    document.getElementById("pendientes").textContent = 8;
-    document.getElementById("criticos").textContent = 3;
-    document.getElementById("mejoria").textContent = 18;
+function aplicarFiltros() {
+    const q = (document.getElementById("buscarPacienteDashboard")?.value || "").toLowerCase().trim();
+    const especie = document.querySelector(".chip.active[data-especie]")?.dataset.especie || "todas";
+    const pacientes = Array.from(document.querySelectorAll(".patient-item"));
+
+    pacientes.forEach(item => {
+        const nombre = (item.dataset.nombre || "").toLowerCase();
+        const especiePaciente = (item.dataset.especie || "").toLowerCase();
+        const coincideNombre = !q || nombre.includes(q);
+        const coincideEspecie = especie === "todas" || especiePaciente.includes(especie);
+        item.style.display = coincideNombre && coincideEspecie ? "" : "none";
+    });
+
+    const activoVisible = pacientes.some(item => item.classList.contains("active") && item.style.display !== "none");
+    if (!activoVisible) {
+        const primerVisible = pacientes.find(item => item.style.display !== "none");
+        if (primerVisible) {
+            seleccionarPaciente(primerVisible);
+        }
+    }
 }
 
-function cargarPacientesDemo() {
-    const pacientes = [
-        {
-            id: 1,
-            nombre: "Luna",
-            especie: "Perro",
-            estado: "Observación",
-            colorEstado: "warning",
-            edad: "3 años",
-            peso: "12.3 kg",
-            sexo: "Hembra",
-            emoji: "🐶"
-        },
-        {
-            id: 2,
-            nombre: "Max",
-            especie: "Gato",
-            estado: "Crítico",
-            colorEstado: "danger",
-            edad: "5 años",
-            peso: "4.8 kg",
-            sexo: "Macho",
-            emoji: "🐱"
-        },
-        {
-            id: 3,
-            nombre: "Kiwi",
-            especie: "Ave",
-            estado: "Estable",
-            colorEstado: "normal",
-            edad: "1 año",
-            peso: "0.4 kg",
-            sexo: "Macho",
-            emoji: "🐦"
-        },
-        {
-            id: 4,
-            nombre: "Rex",
-            especie: "Reptil",
-            estado: "Pendiente",
-            colorEstado: "warning",
-            edad: "2 años",
-            peso: "2.1 kg",
-            sexo: "Hembra",
-            emoji: "🦎"
-        }
-    ];
+function seleccionarPaciente(item) {
+    document.querySelectorAll(".patient-item").forEach(p => p.classList.remove("active"));
+    item.classList.add("active");
 
-    const lista = document.getElementById("listaPacientes");
-    lista.innerHTML = "";
+    const data = item.dataset;
+    document.getElementById("pacienteSeleccionadoTitulo").textContent = data.nombre || "-";
 
-    pacientes.forEach((p, index) => {
-        const item = document.createElement("div");
-        item.className = "patient-item" + (index === 0 ? " active" : "");
-        item.innerHTML = `
-            <div class="patient-info">
-                <strong>${p.emoji} ${p.nombre} <span class="dot">●</span></strong>
-                <p>${p.estado}</p>
-            </div>
-            <span class="tag ${p.colorEstado}">${p.colorEstado === "danger" ? "Alta" : p.colorEstado === "warning" ? "Media" : "Baja"}</span>
-        `;
+    const btnHistorial = document.getElementById("btnHistorialPaciente");
+    if (btnHistorial) {
+        btnHistorial.href = data.historialUrl || "/veterinaria/historial";
+    }
 
-        item.addEventListener("click", () => mostrarFichaPaciente(p));
-        lista.appendChild(item);
-    });
-
-    mostrarFichaPaciente(pacientes[0]);
-
-    const alertas = [
-        { mascota: "Max - Gato", detalle: "Deshidratación severa" },
-        { mascota: "Bella - Perro", detalle: "Control post-cirugía" }
-    ];
-
-    const alertasBox = document.getElementById("alertasCriticas");
-    alertasBox.innerHTML = "";
-
-    alertas.forEach(a => {
-        const div = document.createElement("div");
-        div.className = "small-item";
-        div.innerHTML = `
-            <div>
-                <strong>${a.mascota}</strong>
-                <p>${a.detalle}</p>
-            </div>
-        `;
-        alertasBox.appendChild(div);
-    });
+    mostrarFichaPaciente(data);
 }
 
 function mostrarFichaPaciente(p) {
-    document.getElementById("pacienteSeleccionadoTitulo").textContent = p.nombre;
-
     const ficha = document.getElementById("fichaPaciente");
+    if (!ficha) return;
+
+    const iconClass = iconoPorEspecie(p.especie);
+    const tieneTriaje = Boolean(p.temperatura || p.fc || p.fr || p.fechaTriaje || p.observaciones);
+    const motivoCita = p.citaMotivo ? `
+        <div class="triage-note">
+            <label>Motivo de cita</label>
+            <p>${escapeHtml(p.citaMotivo)}</p>
+        </div>
+    ` : "";
+    const observaciones = p.observaciones ? `
+        <div class="triage-note">
+            <label>Observaciones</label>
+            <p>${escapeHtml(p.observaciones)}</p>
+        </div>
+    ` : "";
+
     ficha.innerHTML = `
         <div class="profile-head">
-            <div class="avatar">${p.emoji}</div>
+            <div class="avatar"><i class="${iconClass}"></i></div>
             <div class="profile-meta">
-                <h3>${p.nombre}</h3>
-                <span>${p.especie}</span>
+                <h3>${escapeHtml(p.nombre || "Paciente")}</h3>
+                <span>${escapeHtml(p.especie || "Especie no registrada")}</span>
             </div>
         </div>
 
         <div class="profile-grid">
             <div class="profile-box">
                 <label>Edad</label>
-                <strong>${p.edad}</strong>
+                <strong>${escapeHtml(p.edad || "No registrada")}</strong>
             </div>
             <div class="profile-box">
                 <label>Peso</label>
-                <strong>${p.peso}</strong>
+                <strong>${escapeHtml(p.peso || "No registrado")}</strong>
             </div>
             <div class="profile-box">
-                <label>Sexo</label>
-                <strong>${p.sexo}</strong>
+                <label>Dueño</label>
+                <strong>${escapeHtml(p.dueno || "Sin dueño")}</strong>
+            </div>
+            <div class="profile-box">
+                <label>Raza</label>
+                <strong>${escapeHtml(p.raza || "No registrada")}</strong>
+            </div>
+            <div class="profile-box">
+                <label>Color</label>
+                <strong>${escapeHtml(p.color || "No registrado")}</strong>
+            </div>
+            <div class="profile-box">
+                <label>Estado</label>
+                <strong>${escapeHtml(p.estado || "Registrado")}</strong>
             </div>
         </div>
+
+        ${tieneTriaje ? `
+            <div class="triage-summary">
+                <div class="triage-title">
+                    <i class="fas fa-stethoscope"></i>
+                    <span>Informacion del triaje</span>
+                </div>
+                <div class="profile-grid">
+                    <div class="profile-box">
+                        <label>Temperatura</label>
+                        <strong>${escapeHtml(p.temperatura || "-")}</strong>
+                    </div>
+                    <div class="profile-box">
+                        <label>FC</label>
+                        <strong>${escapeHtml(p.fc || "-")}</strong>
+                    </div>
+                    <div class="profile-box">
+                        <label>FR</label>
+                        <strong>${escapeHtml(p.fr || "-")}</strong>
+                    </div>
+                </div>
+                <div class="triage-meta">${escapeHtml(p.fechaTriaje ? "Registrado: " + p.fechaTriaje : "Triaje registrado")}</div>
+                ${motivoCita}
+                ${observaciones}
+            </div>
+        ` : `
+            <div class="triage-summary triage-empty">
+                <div class="triage-title">
+                    <i class="fas fa-clock"></i>
+                    <span>Sin triaje registrado</span>
+                </div>
+                <p>Esta mascota ya fue registrada desde recepcion. La informacion de triaje aparecera aqui cuando se inicie desde Pacientes.</p>
+            </div>
+        `}
     `;
 }
 
+function iconoPorEspecie(especie) {
+    const valor = (especie || "").toLowerCase();
+    if (valor.includes("perro")) return "fas fa-dog";
+    if (valor.includes("gato")) return "fas fa-cat";
+    if (valor.includes("ave")) return "fas fa-dove";
+    if (valor.includes("reptil")) return "fas fa-dragon";
+    return "fas fa-paw";
+}
 
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}

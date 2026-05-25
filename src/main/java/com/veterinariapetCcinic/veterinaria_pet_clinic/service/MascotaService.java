@@ -65,6 +65,10 @@ public class MascotaService {
         return mascotaRepository.findAll();
     }
 
+    public List<Mascota> listarTodosConCliente() {
+        return mascotaRepository.findAllWithCliente();
+    }
+
     public List<Mascota> buscarPorCliente(Long clienteId) {
         return mascotaRepository.findByClienteId(clienteId);
     }

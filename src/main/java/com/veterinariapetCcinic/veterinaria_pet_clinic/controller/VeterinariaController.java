@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -73,7 +74,121 @@ public class VeterinariaController {
         model.addAttribute("currentPage", "dashboard");
         usuarioRepository.findByUsername(getUsername()).ifPresent(u ->
             model.addAttribute("nombreUsuario", u.getNombre()));
+
+        LocalDate hoy = LocalDate.now();
+        LocalDateTime inicio = hoy.atStartOfDay();
+        LocalDateTime fin = hoy.atTime(LocalTime.MAX);
+
+        List<Mascota> mascotas = mascotaService.listarTodosConCliente();
+        mascotas.sort((a, b) -> Long.compare(
+                b.getId() != null ? b.getId() : 0L,
+                a.getId() != null ? a.getId() : 0L));
+
+        List<Cita> citasHoy = citaRepository.findCitasDelDiaConDatos(inicio, fin);
+        Map<Long, Cita> citaHoyPorMascota = new HashMap<>();
+        for (Cita cita : citasHoy) {
+            if (cita.getMascota() != null && cita.getMascota().getId() != null) {
+                citaHoyPorMascota.put(cita.getMascota().getId(), cita);
+            }
+        }
+
+        Map<Long, SignosVitales> ultimoSignoPorMascota = new HashMap<>();
+        Map<Long, String> estadoPorMascota = new HashMap<>();
+        Map<Long, String> prioridadPorMascota = new HashMap<>();
+        Map<Long, String> prioridadTextoPorMascota = new HashMap<>();
+
+        int criticos = 0;
+        for (Mascota mascota : mascotas) {
+            SignosVitales ultimoSigno = null;
+            List<SignosVitales> signos = signosVitalesService.ultimosRegistrosDeMascota(mascota.getId(), 1);
+            if (signos != null && !signos.isEmpty()) {
+                ultimoSigno = signos.get(0);
+                ultimoSignoPorMascota.put(mascota.getId(), ultimoSigno);
+            }
+
+            Cita citaHoy = citaHoyPorMascota.get(mascota.getId());
+            boolean esCritico = esTriajeCritico(ultimoSigno);
+            if (esCritico) {
+                criticos++;
+            }
+
+            estadoPorMascota.put(mascota.getId(), obtenerEstadoPaciente(citaHoy, ultimoSigno, esCritico));
+            prioridadPorMascota.put(mascota.getId(), obtenerPrioridadPaciente(citaHoy, ultimoSigno, esCritico));
+            prioridadTextoPorMascota.put(mascota.getId(), obtenerPrioridadTexto(citaHoy, ultimoSigno, esCritico));
+        }
+
+        long pendientes = citasHoy.stream()
+                .filter(c -> "AGENDADA".equalsIgnoreCase(c.getEstado()))
+                .count();
+        long atendidos = citasHoy.stream()
+                .filter(c -> "EN_CONSULTA".equalsIgnoreCase(c.getEstado())
+                          || "ATENDIDA".equalsIgnoreCase(c.getEstado()))
+                .count();
+
+        model.addAttribute("fecha", hoy);
+        model.addAttribute("mascotas", mascotas);
+        model.addAttribute("citaHoyPorMascota", citaHoyPorMascota);
+        model.addAttribute("ultimoSignoPorMascota", ultimoSignoPorMascota);
+        model.addAttribute("estadoPorMascota", estadoPorMascota);
+        model.addAttribute("prioridadPorMascota", prioridadPorMascota);
+        model.addAttribute("prioridadTextoPorMascota", prioridadTextoPorMascota);
+        model.addAttribute("atendidosHoy", atendidos);
+        model.addAttribute("pendientesHoy", pendientes);
+        model.addAttribute("criticosHoy", criticos);
+        model.addAttribute("totalMascotas", mascotas.size());
         return "Veterinaria/dashboard";
+    }
+
+    private boolean esTriajeCritico(SignosVitales signo) {
+        if (signo == null) {
+            return false;
+        }
+        return (signo.getTemperatura() != null && (signo.getTemperatura() >= 40 || signo.getTemperatura() <= 36))
+                || (signo.getFrecuenciaCardiaca() != null && signo.getFrecuenciaCardiaca() > 180)
+                || (signo.getFrecuenciaRespiratoria() != null && signo.getFrecuenciaRespiratoria() > 60);
+    }
+
+    private String obtenerEstadoPaciente(Cita citaHoy, SignosVitales ultimoSigno, boolean critico) {
+        if (critico) {
+            return "Triaje critico";
+        }
+        if (citaHoy != null && "AGENDADA".equalsIgnoreCase(citaHoy.getEstado())) {
+            return "Pendiente de triaje";
+        }
+        if (citaHoy != null && ("EN_CONSULTA".equalsIgnoreCase(citaHoy.getEstado())
+                || "ATENDIDA".equalsIgnoreCase(citaHoy.getEstado()))) {
+            return "Triaje realizado";
+        }
+        if (ultimoSigno != null) {
+            return "Con triaje registrado";
+        }
+        return "Registrado desde recepcion";
+    }
+
+    private String obtenerPrioridadPaciente(Cita citaHoy, SignosVitales ultimoSigno, boolean critico) {
+        if (critico) {
+            return "danger";
+        }
+        if (citaHoy != null && "AGENDADA".equalsIgnoreCase(citaHoy.getEstado())) {
+            return "warning";
+        }
+        if (ultimoSigno != null || (citaHoy != null && "ATENDIDA".equalsIgnoreCase(citaHoy.getEstado()))) {
+            return "normal";
+        }
+        return "warning";
+    }
+
+    private String obtenerPrioridadTexto(Cita citaHoy, SignosVitales ultimoSigno, boolean critico) {
+        if (critico) {
+            return "Alta";
+        }
+        if (citaHoy != null && "AGENDADA".equalsIgnoreCase(citaHoy.getEstado())) {
+            return "Media";
+        }
+        if (ultimoSigno != null || (citaHoy != null && "ATENDIDA".equalsIgnoreCase(citaHoy.getEstado()))) {
+            return "Baja";
+        }
+        return "Media";
     }
 
     // ============ PACIENTES — usa JOIN FETCH para evitar LazyInitializationException ============
@@ -99,10 +214,21 @@ public class VeterinariaController {
                           || "ATENDIDA".equalsIgnoreCase(c.getEstado()))
                 .collect(Collectors.toList());
 
+        List<Long> mascotasConCitaHoy = todasHoy.stream()
+                .filter(c -> c.getMascota() != null && c.getMascota().getId() != null)
+                .map(c -> c.getMascota().getId())
+                .collect(Collectors.toList());
+
+        List<Mascota> pacientesRegistrados = mascotaService.listarTodosConCliente().stream()
+                .filter(m -> m.getId() != null && !mascotasConCitaHoy.contains(m.getId()))
+                .collect(Collectors.toList());
+
         model.addAttribute("esperandoTriaje",  esperandoTriaje);
         model.addAttribute("triajeCompletado", triajeCompletado);
+        model.addAttribute("pacientesRegistrados", pacientesRegistrados);
         model.addAttribute("totalPendientes",  esperandoTriaje.size());
         model.addAttribute("totalAtendidos",   triajeCompletado.size());
+        model.addAttribute("totalRegistrados", pacientesRegistrados.size());
         model.addAttribute("fecha", hoy);
 
         return "Veterinaria/pacientes";

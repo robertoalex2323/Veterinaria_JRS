@@ -47,6 +47,9 @@
                 <span class="badge-count badge-green">
                     <span th:text="${totalAtendidos}">0</span> atendidos
                 </span>
+                <span class="badge-count badge-blue">
+                    <span th:text="${totalRegistrados}">0</span> registrados
+                </span>
             </div>
         </div>
 
@@ -125,6 +128,47 @@
                         Ver Historial
                     </a>
                 </div>
+            </div>
+        </div>
+
+        <!-- Pacientes registrados desde recepción -->
+        <div class="ingresos-header" style="margin-top:28px;">
+            <div class="ingresos-title-block">
+                <h2>Pacientes Registrados</h2>
+                <p class="ingresos-subtitle">Mascotas creadas desde recepción sin cita programada para hoy</p>
+            </div>
+        </div>
+
+        <div th:if="${pacientesRegistrados.empty}" class="triaje-empty" style="margin-top:12px;">
+            <i class="fas fa-paw" style="font-size:2.5rem; color:#d1d5db; display:block; margin-bottom:12px;"></i>
+            <p>No hay pacientes registrados sin cita para hoy</p>
+        </div>
+
+        <div class="triaje-grid" th:if="${!pacientesRegistrados.empty}">
+            <div th:each="mascota : ${pacientesRegistrados}" class="cita-card"
+                 th:attr="data-nombre=${mascota.nombre}">
+                <div class="cita-card-top">
+                    <div class="cita-avatar">
+                        <span th:text="${mascota.especie != null and mascota.especie.toLowerCase() == 'perro' ? '🐶' : (mascota.especie != null and mascota.especie.toLowerCase() == 'gato' ? '🐱' : (mascota.especie != null and mascota.especie.toLowerCase() == 'ave' ? '🐦' : '🐾'))}">🐾</span>
+                    </div>
+                    <div class="cita-info">
+                        <strong th:text="${mascota.nombre}">Nombre</strong>
+                        <span class="cita-raza" th:text="${mascota.raza != null ? mascota.raza : mascota.especie}">Raza</span>
+                    </div>
+                </div>
+                <div class="cita-dueño">
+                    <span><i class="fas fa-user"></i> <span th:text="${mascota.cliente != null ? mascota.cliente.nombre : 'Sin dueño'}">Dueño</span></span>
+                    <span th:if="${mascota.cliente != null and mascota.cliente.telefono != null}">
+                        <i class="fas fa-phone"></i> <span th:text="${mascota.cliente.telefono}">Teléfono</span>
+                    </span>
+                </div>
+                <div class="cita-motivo">
+                    <label>Datos del paciente</label>
+                    <p th:text="${(mascota.edad != null ? mascota.edad + ' años' : 'Edad no registrada') + ' · ' + (mascota.color != null ? mascota.color : 'Color no registrado')}">Datos</p>
+                </div>
+                <a th:href="@{/veterinaria/historial/{id}(id=${mascota.id})}" class="btn-ver-historial">
+                    Ver Historial
+                </a>
             </div>
         </div>
     </main>
