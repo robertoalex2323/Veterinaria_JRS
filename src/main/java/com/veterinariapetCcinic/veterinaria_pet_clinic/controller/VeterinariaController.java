@@ -298,7 +298,7 @@ public class VeterinariaController {
         usuarioRepository.findByUsername(getUsername()).ifPresent(u ->
             model.addAttribute("nombreUsuario", u.getNombre()));
 
-        List<Mascota> mascotas = mascotaService.listarTodos();
+        List<Mascota> mascotas = mascotaService.listarTodosConCliente();
         model.addAttribute("mascotas", mascotas != null ? mascotas : new ArrayList<>());
 
         if (mascotas != null && !mascotas.isEmpty()) {
@@ -313,7 +313,7 @@ public class VeterinariaController {
         usuarioRepository.findByUsername(getUsername()).ifPresent(u ->
             model.addAttribute("nombreUsuario", u.getNombre()));
 
-        List<Mascota> mascotas = mascotaService.listarTodos();
+        List<Mascota> mascotas = mascotaService.listarTodosConCliente();
         model.addAttribute("mascotas", mascotas != null ? mascotas : new ArrayList<>());
         cargarHistorialMascota(mascotaId, model);
         return "Veterinaria/historial";
@@ -321,7 +321,7 @@ public class VeterinariaController {
 
     private void cargarHistorialMascota(Long mascotaId, Model model) {
         try {
-            Mascota mascota = mascotaService.buscarPorId(mascotaId);
+            Mascota mascota = mascotaService.buscarPorIdConCliente(mascotaId);
             model.addAttribute("mascotaSeleccionada", mascota);
 
             List<Consulta> consultas = consultaService.buscarPorMascota(mascotaId);
@@ -332,10 +332,46 @@ public class VeterinariaController {
                 model.addAttribute("ultimoSigno", signos.get(0));
             }
             model.addAttribute("historialSignos", signos != null ? signos : new ArrayList<>());
+            model.addAttribute("pesoFechas", construirFechasPeso(signos));
+            model.addAttribute("pesoValores", construirValoresPeso(signos));
 
         } catch (Exception e) {
             model.addAttribute("errorHistorial", "No se pudo cargar el historial: " + e.getMessage());
+            model.addAttribute("consultas", new ArrayList<>());
+            model.addAttribute("historialSignos", new ArrayList<>());
+            model.addAttribute("pesoFechas", "");
+            model.addAttribute("pesoValores", "");
         }
+    }
+
+    private String construirFechasPeso(List<SignosVitales> signos) {
+        if (signos == null || signos.isEmpty()) {
+            return "";
+        }
+
+        List<String> fechas = new ArrayList<>();
+        for (int i = signos.size() - 1; i >= 0; i--) {
+            SignosVitales signo = signos.get(i);
+            if (signo.getPeso() != null && signo.getFechaRegistro() != null) {
+                fechas.add(signo.getFechaRegistro().toLocalDate().toString());
+            }
+        }
+        return String.join(",", fechas);
+    }
+
+    private String construirValoresPeso(List<SignosVitales> signos) {
+        if (signos == null || signos.isEmpty()) {
+            return "";
+        }
+
+        List<String> pesos = new ArrayList<>();
+        for (int i = signos.size() - 1; i >= 0; i--) {
+            SignosVitales signo = signos.get(i);
+            if (signo.getPeso() != null && signo.getFechaRegistro() != null) {
+                pesos.add(signo.getPeso().toString());
+            }
+        }
+        return String.join(",", pesos);
     }
 
     // ============ API JSON para historial ============

@@ -21,6 +21,9 @@ public interface MascotaRepository extends JpaRepository<Mascota, Long> {
 
     @Query("SELECT m FROM Mascota m LEFT JOIN FETCH m.cliente ORDER BY m.nombre ASC")
     List<Mascota> findAllWithCliente();
+
+    @Query("SELECT m FROM Mascota m LEFT JOIN FETCH m.cliente WHERE m.id = :id")
+    Optional<Mascota> findByIdWithCliente(@Param("id") Long id);
     
     @Query("SELECT m FROM Mascota m LEFT JOIN FETCH m.citas WHERE m.id = :id")
     Optional<Mascota> findByIdWithCitas(@Param("id") Long id);

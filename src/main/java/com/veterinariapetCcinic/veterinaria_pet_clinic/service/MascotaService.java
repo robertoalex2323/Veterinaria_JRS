@@ -61,6 +61,14 @@ public class MascotaService {
         throw new RuntimeException("Mascota no encontrada con ID: " + id);
     }
 
+    public Mascota buscarPorIdConCliente(Long id) {
+        Optional<?> optional = mascotaRepository.findByIdWithCliente(id);
+        if (optional.isPresent()) {
+            return (Mascota) optional.get();
+        }
+        throw new RuntimeException("Mascota no encontrada con ID: " + id);
+    }
+
     public List<Mascota> listarTodos() {
         return mascotaRepository.findAll();
     }
