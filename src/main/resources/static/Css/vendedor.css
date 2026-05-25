@@ -685,6 +685,67 @@ input.input-error, select.input-error {
     line-height: 1.4;
 }
 
+/* Chart Styles */
+.chart-container {
+    border: 1px solid var(--border-color);
+}
+
+.chart-container .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chart-container .panel-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+#chartStats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.chart-stat {
+    background: rgba(248, 250, 252, 0.5);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.chart-stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.chart-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.chart-stat-change {
+    font-size: 0.75rem;
+    color: var(--success-color);
+    margin-top: 0.25rem;
+}
+
+.chart-stat-change.negative {
+    color: var(--accent-color);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .sidebar {

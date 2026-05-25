@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" th:href="@{/css/vendedor.css}">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}" />
 </head>
@@ -113,6 +115,22 @@
                     <button class="btn btn-primary" onclick="switchTab('new-sale')">
                         <i class="fa-solid fa-plus"></i> Iniciar Nueva Venta
                     </button>
+                </div>
+            </div>
+
+            <!-- SALES CHART -->
+            <div class="glass-panel chart-container" style="margin-top: 2rem;">
+                <div class="panel-header">
+                    <h2 style="font-size: 1.1rem; font-weight: 600;"><i class="fa-solid fa-chart-line" style="color: var(--primary-color);"></i> Ventas - Últimos 7 Días</h2>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Tendencia de ingresos</span>
+                </div>
+                <div class="panel-body" style="padding: 1.5rem;">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                    <div id="chartStats" style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <!-- Stats inyectadas por JS -->
+                    </div>
                 </div>
             </div>
         </div>

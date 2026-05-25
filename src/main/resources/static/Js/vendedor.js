@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadHistory();
     updateStockIndicator();
     setMaxDateFilter(); // Establecer límite de fecha
+    renderSalesChart(); // Renderizar gráfica
 });
 
 // Establecer fecha máxima permitida en el filtro (hoy)
@@ -158,6 +159,7 @@ function processSale() {
     showToast("Venta registrada con éxito.");
     resetSaleForm();
     loadHistory(); // refresh table
+    refreshChart(); // refresh chart
 }
 
 function loadHistory() {
@@ -384,4 +386,196 @@ function showToast(message, type = "success") {
     setTimeout(() => {
         toast.classList.remove("show");
     }, 4000);
+}
+
+// ============ SALES CHART ============
+
+// Variable global para la gráfica
+let salesChart = null;
+
+// Generar datos de ventas de los últimos 7 días
+function getSalesData() {
+    const data = [];
+    const labels = [];
+    
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleDateString('es-PE', { month: 'short', day: 'numeric' });
+        labels.push(dateStr);
+        
+        // Calcular ventas del día basado en salesHistory
+        let dailySales = 0;
+        const dayStart = new Date(date);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
+        
+        salesHistory.forEach(sale => {
+            const saleDate = new Date(sale.date);
+            if (saleDate >= dayStart && saleDate <= dayEnd) {
+                dailySales += sale.total;
+            }
+        });
+        
+        data.push(dailySales);
+    }
+    
+    return { labels, data };
+}
+
+// Renderizar gráfica de ventas
+function renderSalesChart() {
+    const canvas = document.getElementById("salesChart");
+    if (!canvas) return;
+    
+    // Destruir gráfica anterior si existe
+    if (salesChart) {
+        salesChart.destroy();
+    }
+    
+    const { labels, data } = getSalesData();
+    
+    // Calcular estadísticas
+    const totalSales = data.reduce((a, b) => a + b, 0);
+    const avgSales = totalSales / data.length;
+    const maxSales = Math.max(...data);
+    const minSales = Math.min(...data);
+    
+    // Crear contexto de gráfica
+    const ctx = canvas.getContext('2d');
+    
+    // Calcular línea de promedio
+    const avgLine = Array(data.length).fill(avgSales);
+    
+    salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Ventas (S/)',
+                    data: data,
+                    borderColor: '#059669',
+                    backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: '#059669',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    tension: 0.4,
+                    spanGaps: true
+                },
+                {
+                    label: 'Promedio (S/)',
+                    data: avgLine,
+                    borderColor: '#f59e0b',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    tension: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 13,
+                            weight: '600',
+                            family: "'Playfair Display', serif"
+                        },
+                        color: '#64748b',
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': S/ ' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'S/ ' + value.toFixed(0);
+                        },
+                        font: { size: 12 },
+                        color: '#64748b'
+                    },
+                    grid: {
+                        color: 'rgba(203, 213, 225, 0.1)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 12 },
+                        color: '#64748b'
+                    },
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                }
+            }
+        }
+    });
+    
+    // Actualizar estadísticas
+    updateChartStats(totalSales, avgSales, maxSales);
+}
+
+// Actualizar estadísticas bajo la gráfica
+function updateChartStats(total, avg, max) {
+    const statsEl = document.getElementById("chartStats");
+    if (!statsEl) return;
+    
+    const prevTotal = window.lastTotalSales || 0;
+    const changePercent = prevTotal > 0 ? ((total - prevTotal) / prevTotal * 100).toFixed(0) : 0;
+    const changeClass = total >= prevTotal ? '' : 'negative';
+    const changeSymbol = total >= prevTotal ? '↑' : '↓';
+    
+    statsEl.innerHTML = `
+        <div class="chart-stat">
+            <div class="chart-stat-label">Total 7 Días</div>
+            <div class="chart-stat-value">S/ ${total.toFixed(2)}</div>
+            <div class="chart-stat-change ${changeClass}">${changeSymbol} ${Math.abs(changePercent)}%</div>
+        </div>
+        <div class="chart-stat">
+            <div class="chart-stat-label">Promedio/Día</div>
+            <div class="chart-stat-value">S/ ${avg.toFixed(2)}</div>
+        </div>
+        <div class="chart-stat">
+            <div class="chart-stat-label">Máximo/Día</div>
+            <div class="chart-stat-value">S/ ${max.toFixed(2)}</div>
+        </div>
+    `;
+    
+    window.lastTotalSales = total;
+}
+
+// Actualizar gráfica cuando se registra una nueva venta
+function refreshChart() {
+    if (document.getElementById("salesChart")) {
+        renderSalesChart();
+    }
 }
