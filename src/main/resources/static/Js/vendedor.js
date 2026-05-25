@@ -4,7 +4,22 @@ document.addEventListener("DOMContentLoaded", () => {
     loadPromotions();
     loadHistory();
     updateStockIndicator();
+    setMaxDateFilter(); // Establecer límite de fecha
 });
+
+// Establecer fecha máxima permitida en el filtro (hoy)
+function setMaxDateFilter() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const maxDate = `${year}-${month}-${day}`;
+    
+    const filterDateInput = document.getElementById("filterDate");
+    if (filterDateInput) {
+        filterDateInput.setAttribute("max", maxDate);
+    }
+}
 
 function initHistoryFilters() {
     const searchClient = document.getElementById("searchClient");
@@ -263,7 +278,21 @@ function updateStockIndicator() {
 // Filtrar historial por cliente y fecha
 function filterHistory() {
     const searchClient = document.getElementById("searchClient").value.toLowerCase();
-    const filterDate = document.getElementById("filterDate").value;
+    let filterDate = document.getElementById("filterDate").value;
+    
+    // Validación adicional: rechazar fechas futuras
+    if (filterDate) {
+        const selectedDate = new Date(filterDate + "T00:00:00");
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate > today) {
+            showToast("No puedes seleccionar fechas futuras. Se mostrarán todas las ventas.", "error");
+            document.getElementById("filterDate").value = "";
+            filterDate = "";
+        }
+    }
+    
     const tbody = document.getElementById("salesTableBody");
     const noResults = document.getElementById("noResults");
     const rows = tbody.querySelectorAll("tr");
