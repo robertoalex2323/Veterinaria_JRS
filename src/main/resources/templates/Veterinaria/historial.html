@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial Clínico - Panel Veterinario</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard-veterinaria.css}">
+    <link rel="stylesheet" th:href="@{/css/pacientes-veterinaria.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" th:href="@{/Imagen/Iconos/logo.png}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+    <div th:replace="~{fragments/sidebar-veterinaria :: sidebar}"></div>
+
+    <main class="main">
+        <header class="header">
+            <div class="status-pill">● Sistema Activo</div>
+            <div class="search-box">
+                <input type="text" id="buscadorPaciente" placeholder="Buscar paciente...">
+            </div>
+        </header>
+
+        <section class="hero">
+    <h1>Historial Clínico</h1>
+    <p th:text="${#temporals.format(#temporals.createNow(), 'EEEE, dd ''de'' MMMM yyyy', new java.util.Locale('es'))}">Hoy</p>
+</section>
+
+        <div class="historial-grid">
+            <!-- ===== LISTA DE MASCOTAS ===== -->
+            <div class="historial-panel">
+                <div class="historial-panel-header">
+                    <h3>Seleccionar Paciente</h3>
+                    <span class="badge-count badge-blue" th:text="${mascotas.size() + ' activos'}">0 activos</span>
+                </div>
+
+                <div class="mascota-list" id="listaMascotas">
+                    <div th:each="m : ${mascotas}"
+                         class="mascota-item"
+                         th:classappend="${mascotaSeleccionada != null and mascotaSeleccionada.id == m.id ? ' mascota-item-active' : ''}"
+                         th:attr="data-nombre=${m.nombre}, data-id=${m.id}"
+                         th:onclick="'cargarHistorial(' + ${m.id} + ', this)'">
+                        <div class="mascota-item-left">
+                            <div class="mascota-item-avatar">
+                                <span th:text="${m.especie != null and m.especie.toLowerCase() == 'perro' ? '🐶' : (m.especie != null and m.especie.toLowerCase() == 'gato' ? '🐱' : (m.especie != null and m.especie.toLowerCase() == 'ave' ? '🐦' : '🐾'))}">🐾</span>
+                            </div>
+                            <div>
+                                <div class="mascota-item-nombre">
+                                    <span th:text="${m.nombre}">Nombre</span>
+                                    <span class="dot-estado dot-activo">•</span>
+                                </div>
+                                <div class="mascota-item-sub" th:text="${m.raza != null ? m.raza : m.especie}">Raza</div>
+                            </div>
+                        </div>
+                        <!-- Prioridad basada en último estado -->
+                        <span class="prio-badge prio-media">Media</span>
+                    </div>
+
+                    <div th:if="${mascotas.empty}" class="triaje-empty">
+                        <i class="fas fa-paw" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:10px;"></i>
+                        <p>No hay mascotas registradas</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== HISTORIAL DETALLE ===== -->
+            <div class="historial-detalle" id="historialDetalle">
+                <!-- Estado vacío -->
+                <div th:if="${mascotaSeleccionada == null}" class="historial-vacio">
+                    <i class="fas fa-paw" style="font-size:3rem; color:#d1d5db; margin-bottom:16px;"></i>
+                    <p>Selecciona un paciente para ver su historial</p>
+                </div>
+
+                <!-- Detalle de mascota seleccionada -->
+                <div th:if="${mascotaSeleccionada != null}" id="contenidoHistorial">
+                    <!-- Header historial -->
+                    <div class="historial-detalle-header">
+                        <div>
+                            <h2 th:text="'Historial de ' + ${mascotaSeleccionada.nombre}">Historial</h2>
+                            <p class="historial-subtitulo">Registro completo del paciente</p>
+                        </div>
+                        <a th:href="@{/veterinaria/historial}" class="btn-dar-baja">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                    </div>
+
+                    <!-- Info básica -->
+                    <div class="historial-info-grid">
+                        <div class="info-chip">
+                            <label>Especie</label>
+                            <strong th:text="${mascotaSeleccionada.especie}">—</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Raza</label>
+                            <strong th:text="${mascotaSeleccionada.raza != null ? mascotaSeleccionada.raza : '—'}">—</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Edad</label>
+                            <strong th:text="${mascotaSeleccionada.edad != null ? mascotaSeleccionada.edad + ' años' : '—'}">—</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Color</label>
+                            <strong th:text="${mascotaSeleccionada.color != null ? mascotaSeleccionada.color : '—'}">—</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Dueño</label>
+                            <strong th:text="${mascotaSeleccionada.cliente.nombre}">—</strong>
+                        </div>
+                        <div class="info-chip">
+                            <label>Alergias</label>
+                            <strong th:text="${mascotaSeleccionada.alergias != null ? mascotaSeleccionada.alergias : 'Ninguna'}">—</strong>
+                        </div>
+                    </div>
+
+                    <!-- Signos Vitales Actuales -->
+                    <div class="panel historial-section" th:if="${ultimoSigno != null}">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-wave-square" style="color:#e879b0; margin-right:8px;"></i> Signos Vitales Actuales</h2>
+                        </div>
+                        <div class="signos-grid">
+                            <div class="signo-card signo-temp">
+                                <label>Temperatura</label>
+                                <div class="signo-valor" th:text="${ultimoSigno.temperatura != null ? ultimoSigno.temperatura + '°C' : '—'}">—</div>
+                                <span class="signo-estado">Normal</span>
+                            </div>
+                            <div class="signo-card signo-peso">
+                                <label>Peso</label>
+                                <div class="signo-valor" th:text="${ultimoSigno.peso != null ? ultimoSigno.peso + ' kg' : '—'}">—</div>
+                                <span class="signo-estado signo-estado-ok">Normal</span>
+                            </div>
+                            <div class="signo-card signo-fc">
+                                <label>FC</label>
+                                <div class="signo-valor" th:text="${ultimoSigno.frecuenciaCardiaca != null ? ultimoSigno.frecuenciaCardiaca + ' bpm' : '—'}">—</div>
+                                <span class="signo-estado">Normal</span>
+                            </div>
+                            <div class="signo-card signo-fr">
+                                <label>FR</label>
+                                <div class="signo-valor" th:text="${ultimoSigno.frecuenciaRespiratoria != null ? ultimoSigno.frecuenciaRespiratoria + ' rpm' : '—'}">—</div>
+                                <span class="signo-estado signo-estado-warn">Normal</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico evolución de peso -->
+                    <div class="panel historial-section" th:if="${historialSignos != null and !historialSignos.empty}">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-chart-line" style="color:#3b82f6; margin-right:8px;"></i> Evolución de Peso</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartPeso"></canvas>
+                        </div>
+
+                        <!-- Datos para el gráfico via th:data -->
+                        <div id="pesoData" style="display:none;"
+                             th:attr="data-fechas=${historialSignos.stream().map(s -> s.getFechaRegistro().toLocalDate().toString()).collect(T(java.util.stream.Collectors).joining(','))},
+                                      data-pesos=${historialSignos.stream().filter(s -> s.getPeso() != null).map(s -> s.getPeso().toString()).collect(T(java.util.stream.Collectors).joining(','))}">
+                        </div>
+                    </div>
+
+                    <!-- Historial de Consultas -->
+                    <div class="panel historial-section">
+                        <div class="panel-header">
+                            <h2><i class="fas fa-notes-medical" style="color:#7c3aed; margin-right:8px;"></i> Consultas Anteriores</h2>
+                            <span class="badge" th:text="${consultas.size() + ' registros'}">0</span>
+                        </div>
+
+                        <div th:if="${consultas.empty}" class="triaje-empty" style="padding:24px 0;">
+                            <i class="fas fa-file-medical" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:8px;"></i>
+                            <p>Sin consultas registradas aún</p>
+                        </div>
+
+                        <div th:each="consulta : ${consultas}" class="consulta-item">
+                            <div class="consulta-item-header">
+                                <div class="consulta-fecha">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span th:text="${#temporals.format(consulta.fechaConsulta, 'dd/MM/yyyy HH:mm')}">Fecha</span>
+                                </div>
+                                <span class="consulta-estado-badge"
+                                      th:classappend="${consulta.estado == 'ACTIVA' ? ' estado-activa' : (consulta.estado == 'FINALIZADA' ? ' estado-finalizada' : ' estado-otro')}"
+                                      th:text="${consulta.estado}">ACTIVA</span>
+                            </div>
+                            <div class="consulta-item-body">
+                                <div class="consulta-motivo">
+                                    <label>Motivo</label>
+                                    <p th:text="${consulta.motivoConsulta != null ? consulta.motivoConsulta : '—'}">—</p>
+                                </div>
+                                <div class="consulta-signos" th:if="${consulta.peso != null or consulta.temperatura != null}">
+                                    <span th:if="${consulta.peso != null}">
+                                        <i class="fas fa-weight"></i> <span th:text="${consulta.peso + ' kg'}"></span>
+                                    </span>
+                                    <span th:if="${consulta.temperatura != null}">
+                                        <i class="fas fa-thermometer-half"></i> <span th:text="${consulta.temperatura + '°C'}"></span>
+                                    </span>
+                                    <span th:if="${consulta.frecuenciaCardiaca != null}">
+                                        <i class="fas fa-heartbeat"></i> <span th:text="${consulta.frecuenciaCardiaca + ' bpm'}"></span>
+                                    </span>
+                                </div>
+                                <div class="consulta-obs" th:if="${consulta.observaciones != null and !consulta.observaciones.empty}">
+                                    <label>Observaciones / Plan</label>
+                                    <p th:text="${consulta.observaciones}">—</p>
+                                </div>
+                                <div class="consulta-vet" th:if="${consulta.veterinario != null}">
+                                    <i class="fas fa-user-md"></i> Dr. <span th:text="${consulta.veterinario.nombre}">Veterinario</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- fin contenidoHistorial -->
+            </div><!-- fin historialDetalle -->
+        </div><!-- fin historial-grid -->
+    </main>
+</div>
+
+<script th:inline="javascript">
+// Gráfico de peso con Chart.js
+document.addEventListener('DOMContentLoaded', () => {
+    const pesoData = document.getElementById('pesoData');
+    if (!pesoData) return;
+
+    const fechas = pesoData.dataset.fechas ? pesoData.dataset.fechas.split(',') : [];
+    const pesos = pesoData.dataset.pesos ? pesoData.dataset.pesos.split(',').map(Number) : [];
+
+    if (fechas.length === 0 || pesos.length === 0) return;
+
+    const ctx = document.getElementById('chartPeso').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: fechas,
+            datasets: [{
+                label: 'Peso (kg)',
+                data: pesos,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.08)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#3b82f6',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: {
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { callback: v => v + ' kg' }
+                }
+            }
+        }
+    });
+});
+
+// Cambiar mascota activa en la lista
+function cargarHistorial(id, el) {
+    window.location.href = '/veterinaria/historial/' + id;
+}
+
+// Buscador de mascotas
+document.getElementById('buscadorPaciente').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.mascota-item').forEach(item => {
+        const nombre = (item.dataset.nombre || '').toLowerCase();
+        item.style.display = nombre.includes(q) ? '' : 'none';
+    });
+});
+</script>
+</body>
+</html>
