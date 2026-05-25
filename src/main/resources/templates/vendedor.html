@@ -127,18 +127,22 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Producto o Servicio</label>
-                            <select id="saleProduct" onchange="updatePrice()">
-                                <option value="" data-price="0">Seleccione un producto...</option>
-                                <option value="Alimento Premium Perro 15kg" data-price="150.00">Alimento Premium Perro 15kg</option>
-                                <option value="Vacuna Múltiple" data-price="60.00">Vacuna Múltiple</option>
-                                <option value="Baño y Corte (Raza Pequeña)" data-price="45.00">Baño y Corte (Raza Pequeña)</option>
-                                <option value="Antipulgas Bravecto" data-price="110.00">Antipulgas Bravecto</option>
-                                <option value="Consulta Veterinaria General" data-price="50.00">Consulta Veterinaria General</option>
-                            </select>
+                            <div class="product-select-wrapper">
+                                <select id="saleProduct" onchange="updatePrice()">
+                                    <option value="" data-price="0" data-stock="0">Seleccione un producto...</option>
+                                    <option value="Alimento Premium Perro 15kg" data-price="150.00" data-stock="25">Alimento Premium Perro 15kg</option>
+                                    <option value="Vacuna Múltiple" data-price="60.00" data-stock="50">Vacuna Múltiple</option>
+                                    <option value="Baño y Corte (Raza Pequeña)" data-price="45.00" data-stock="0">Baño y Corte (Raza Pequeña)</option>
+                                    <option value="Antipulgas Bravecto" data-price="110.00" data-stock="15">Antipulgas Bravecto</option>
+                                    <option value="Consulta Veterinaria General" data-price="50.00" data-stock="0">Consulta Veterinaria General</option>
+                                </select>
+                                <div class="stock-indicator" id="stockIndicator"></div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Cantidad</label>
-                            <input type="number" id="saleQuantity" value="1" min="1" oninput="calculateTotal()">
+                            <input type="number" id="saleQuantity" value="1" min="1" oninput="calculateTotal(); validateQuantity()">
+                            <small id="quantityError" class="error-text" style="display: none;"></small>
                         </div>
                         <div class="form-group">
                             <label>Precio Unitario (S/)</label>
@@ -149,7 +153,8 @@
                     <div class="form-row" style="margin-top: 1rem;">
                         <div class="form-group">
                             <label>Nombre del Cliente</label>
-                            <input type="text" id="clientName" placeholder="Ej. Juan Pérez">
+                            <input type="text" id="clientName" placeholder="Ej. Juan Pérez" oninput="validateClientName()">
+                            <small id="clientError" class="error-text" style="display: none;"></small>
                         </div>
                         <div class="form-group">
                             <label>Método de Pago</label>
@@ -183,11 +188,28 @@
             <div class="glass-panel">
                 <div class="panel-header">
                     <h2><i class="fa-solid fa-clock-rotate-left"></i> Historial de Ventas</h2>
-                    <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="loadHistory()">
-                        <i class="fa-solid fa-rotate-right"></i> Actualizar
-                    </button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="loadHistory()">
+                            <i class="fa-solid fa-rotate-right"></i> Actualizar
+                        </button>
+                        <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="exportarHistorial()" title="Descargar como Excel">
+                            <i class="fa-solid fa-file-excel"></i> Exportar
+                        </button>
+                    </div>
                 </div>
                 <div class="panel-body">
+                    <div class="search-filters" style="margin-bottom: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div class="search-group">
+                                <label style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary);">Buscar por Cliente</label>
+                                <input type="text" id="searchClient" placeholder="Nombre del cliente..." oninput="filterHistory()" class="search-input">
+                            </div>
+                            <div class="search-group">
+                                <label style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary);">Filtrar por Fecha</label>
+                                <input type="date" id="filterDate" oninput="filterHistory()" class="search-input">
+                            </div>
+                        </div>
+                    </div>
                     <div class="table-wrapper">
                         <table class="data-table">
                             <thead>
@@ -204,6 +226,10 @@
                                 <!-- Datos inyectados por JS -->
                             </tbody>
                         </table>
+                        <div id="noResults" style="display: none; text-align: center; padding: 2rem; color: var(--text-secondary);">
+                            <i class="fa-solid fa-search" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                            <p>No se encontraron resultados con los filtros aplicados</p>
+                        </div>
                     </div>
                 </div>
             </div>
