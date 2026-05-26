@@ -2,6 +2,7 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,6 +92,22 @@ public class MascotaService {
 
     public long contarMascotasPorCliente(Long clienteId) {
         return mascotaRepository.countByClienteId(clienteId);
+    }
+
+    @Transactional
+    public Mascota darDeBaja(Long id) {
+        Mascota mascota = buscarPorId(id);
+        mascota.setActivo(false);
+        mascota.setFechaBaja(LocalDate.now());
+        return mascotaRepository.save(mascota);
+    }
+
+    @Transactional
+    public Mascota readmitir(Long id) {
+        Mascota mascota = buscarPorId(id);
+        mascota.setActivo(true);
+        mascota.setFechaBaja(null);
+        return mascotaRepository.save(mascota);
     }
 
     @Transactional

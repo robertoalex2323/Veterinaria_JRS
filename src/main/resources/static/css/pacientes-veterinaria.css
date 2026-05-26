@@ -63,6 +63,71 @@
 .badge-green  { background: #e8fdf2; color: #166534; border: 1px solid #bbf7d0; }
 .badge-blue   { background: #e7f4ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
 
+.date-filter-card,
+.historial-filter-card {
+    background: rgba(255,255,255,0.92);
+    border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 24px;
+    padding: 18px 22px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    margin-bottom: 22px;
+}
+
+.date-filter-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+}
+
+.date-filter-card label {
+    display: block;
+    font-weight: 700;
+    color: #1f2433;
+    margin-bottom: 4px;
+}
+
+.date-filter-card p {
+    margin: 0;
+    color: #7a8193;
+    font-size: 13px;
+}
+
+.date-filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.date-filter-actions input {
+    border: 1px solid #e3e7f0;
+    border-radius: 14px;
+    padding: 11px 13px;
+    font-family: inherit;
+    color: #374151;
+}
+
+.date-filter-actions button,
+.date-filter-link {
+    border: none;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.date-filter-actions button {
+    background: #c4b5fd;
+    color: #3b1fa8;
+    cursor: pointer;
+}
+
+.date-filter-link {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
 /* ---- GRID TRIAJE ---- */
 .triaje-grid {
     display: grid;
@@ -424,6 +489,58 @@
 .mascota-item-sub { font-size: 12px; color: #7a8193; margin-top: 2px; }
 .dot-estado { font-size: 10px; margin-left: 4px; }
 .dot-activo { color: #10b981; }
+.dot-baja { color: #fb7185; }
+
+.historial-search-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e3e7f0;
+    border-radius: 14px;
+    padding: 0 14px;
+    background: white;
+    margin-bottom: 14px;
+}
+
+.historial-search-row i {
+    color: #9ca3af;
+}
+
+.historial-search-row input {
+    width: 100%;
+    border: none;
+    outline: none;
+    padding: 14px 0;
+    font-family: inherit;
+    color: #374151;
+}
+
+.historial-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.historial-tabs a {
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: #f3f4f6;
+    color: #4b5563;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.historial-tabs a.active {
+    background: #c4a7e7;
+    color: white;
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.22);
+}
+
+.historial-tabs a.active.baja {
+    background: #fb7185;
+}
 
 .prio-badge {
     font-size: 12px;
@@ -482,6 +599,38 @@
     transition: filter 0.18s;
 }
 .btn-dar-baja:hover { filter: brightness(0.96); }
+
+.historial-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.historial-actions form {
+    margin: 0;
+}
+
+.btn-volver {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.btn-readmitir {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, #d1fae5, #bbf7d0);
+    color: #166534;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
 
 /* Info grid */
 .historial-info-grid {
@@ -634,4 +783,10 @@
     .signos-grid { grid-template-columns: 1fr 1fr; }
     .historial-info-grid { grid-template-columns: 1fr 1fr; }
     .ingresos-header { flex-direction: column; gap: 14px; }
+    .date-filter-card { flex-direction: column; align-items: stretch; }
+    .date-filter-actions { align-items: stretch; }
+    .date-filter-actions input,
+    .date-filter-actions button,
+    .date-filter-link { width: 100%; text-align: center; }
+    .historial-tabs { grid-template-columns: 1fr; }
 }
