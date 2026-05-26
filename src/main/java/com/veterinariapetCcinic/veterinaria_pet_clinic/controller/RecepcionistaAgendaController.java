@@ -3,10 +3,13 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -26,6 +29,8 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 @Controller
 @RequestMapping("/recepcionista/agenda")
 public class RecepcionistaAgendaController {
+
+    private static final Logger log = LoggerFactory.getLogger(RecepcionistaAgendaController.class);
 
     private final AgendaService agendaService;
     private final UsuarioRepository usuarioRepository;
@@ -66,12 +71,24 @@ public class RecepcionistaAgendaController {
             @RequestParam Integer duracionTurno,
             @RequestParam(required = false) Long veterinarioId,
             RedirectAttributes redirectAttributes) {
+        
         try {
             if (duracionTurno == null || duracionTurno <= 0) {
                 throw new IllegalArgumentException("La duración del turno debe ser mayor a 0.");
             }
+            // 1. Validaciones de Inteligencia de Negocio
+            if (fecha.isBefore(LocalDate.now())) {
+                throw new IllegalArgumentException("No se pueden generar horarios para una fecha pasada.");
+            }
             if (!horaFin.isAfter(horaInicio)) {
                 throw new IllegalArgumentException("La hora fin debe ser mayor a la hora inicio.");
+            }
+            if (duracionTurno < 15) {
+                throw new IllegalArgumentException("La duración mínima permitida es de 15 minutos.");
+            }
+            long minutosTotales = ChronoUnit.MINUTES.between(horaInicio, horaFin);
+            if (minutosTotales < duracionTurno) {
+                throw new IllegalArgumentException("El rango horario es menor a la duración del turno.");
             }
 
             Usuario veterinario = null;
@@ -83,34 +100,50 @@ public class RecepcionistaAgendaController {
                 }
             }
 
+            log.info("Generando bloques para el día {} de {} a {} ({} min) - Vet ID: {}", 
+                     fecha, horaInicio, horaFin, duracionTurno, veterinarioId);
+
             LocalTime cursor = horaInicio;
             int creados = 0;
+            int actualizados = 0;
 
-            while (cursor.plusMinutes(duracionTurno).compareTo(horaFin) <= 0) {
+            while (!cursor.plusMinutes(duracionTurno).isAfter(horaFin)) {
                 LocalTime slotFin = cursor.plusMinutes(duracionTurno);
 
-                Agenda existente = agendaService.buscarAgendaPorFechaYHora(fecha, cursor);
-                if (existente == null) {
-                    Agenda agenda = new Agenda();
-                    agenda.setFecha(fecha);
-                    agenda.setHoraInicio(cursor);
-                    agenda.setHoraFin(slotFin);
-                    agenda.setDuracionTurno(duracionTurno);
-                    agenda.setDisponible(true);
-                    agenda.setVeterinario(veterinario);
-                    agendaService.guardar(agenda);
-                    creados++;
-                } else if (existente.getVeterinario() == null && veterinario != null) {
-                    existente.setVeterinario(veterinario);
-                    agendaService.guardar(existente);
+                // Inteligencia: Evitar generar horarios que ya pasaron si la fecha es hoy
+                if (fecha.isEqual(LocalDate.now()) && cursor.isBefore(LocalTime.now())) {
+                    cursor = slotFin;
+                    continue;
                 }
 
-                cursor = slotFin;
+                Agenda existente = agendaService.buscarAgendaPorFechaYHora(fecha, cursor);
+
+                if (existente == null) {
+                    Agenda nueva = new Agenda();
+                    nueva.setFecha(fecha);
+                    nueva.setHoraInicio(cursor);
+                    nueva.setHoraFin(slotFin);
+                    nueva.setDuracionTurno(duracionTurno);
+                    nueva.setDisponible(true);
+                    nueva.setVeterinario(veterinario);
+                    agendaService.guardar(nueva);
+                    creados++;
+                } else if (Boolean.TRUE.equals(existente.getDisponible()) && existente.getVeterinario() == null && veterinario != null) {
+                    // Si el bloque existe y está libre, asignamos al veterinario solicitado
+                    existente.setVeterinario(veterinario);
+                    agendaService.guardar(existente);
+                    actualizados++;
+                }
+
+                cursor = slotFin; // El sistema salta automáticamente al siguiente bloque calculado
             }
 
-            redirectAttributes.addFlashAttribute("success",
-                    "Horarios generados: " + creados + ". Fecha: " + fecha);
+            log.info("Proceso terminado. Creados: {}, Actualizados: {}", creados, actualizados);
+            redirectAttributes.addFlashAttribute("success", 
+                String.format("Agenda actualizada para el %s. Bloques nuevos: %d, Asignados: %d", fecha, creados, actualizados));
+
         } catch (Exception e) {
+            log.error("Error al generar horarios: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/recepcionista/agenda/horarios?fecha=" + fecha;
