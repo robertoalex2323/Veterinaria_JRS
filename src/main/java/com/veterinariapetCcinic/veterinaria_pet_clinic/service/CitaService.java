@@ -3,7 +3,9 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,7 @@ public class CitaService {
     
     @Transactional
     public Cita guardar(Cita cita) {
+        Objects.requireNonNull(cita, "La cita no puede ser nula");
         validarDisponibilidad(cita.getFechaHora());
         
         // Bloquear horario en la agenda automáticamente
@@ -38,7 +41,7 @@ public class CitaService {
             agendaService.bloquearHorario(agenda.getId());
         }
         
-        Cita citaGuardada = citaRepository.save(cita);
+        Cita citaGuardada = Objects.requireNonNull(citaRepository.save(cita));
         log.info("Cita agendada exitosamente: ID {} para mascota {}", citaGuardada.getId(), citaGuardada.getMascota().getNombre());
         notificacionService.enviarConfirmacionCita(citaGuardada);
         return citaGuardada;
@@ -46,7 +49,8 @@ public class CitaService {
     
     @Transactional
     public Cita actualizar(Cita cita) {
-        return citaRepository.save(cita);
+        Objects.requireNonNull(cita, "La cita no puede ser nula");
+        return Objects.requireNonNull(citaRepository.save(cita));
     }
     
     @Transactional
@@ -55,7 +59,7 @@ public class CitaService {
         cita.setEstado("CONFIRMADA");
         log.info("Cita ID {} confirmada por el veterinario", id);
         notificacionService.enviarNotificacionVeterinario(cita);
-        return citaRepository.save(cita);
+        return Objects.requireNonNull(citaRepository.save(cita));
     }
     
     @Transactional
@@ -63,7 +67,7 @@ public class CitaService {
         Cita cita = buscarPorId(id);
         cita.setEstado("CANCELADA");
         cita.setObservaciones("Cancelada: " + motivo);
-        citaRepository.save(cita);
+        Objects.requireNonNull(citaRepository.save(cita));
         log.warn("Cita ID {} cancelada. Motivo: {}", id, motivo);
         
         // Liberar horario en la agenda automáticamente
@@ -127,14 +131,17 @@ public class CitaService {
         }
 
         // Inteligencia: Validar cruces usando la duración REAL del turno definido en la agenda
-        int duracion = (agenda.getDuracionTurno() != null) ? agenda.getDuracionTurno() : 30;
+        long duracion = ChronoUnit.MINUTES.between(agenda.getHoraInicio(), agenda.getHoraFin());
         LocalDateTime inicio = fechaHora.minusMinutes(duracion - 1);
         LocalDateTime fin = fechaHora.plusMinutes(duracion - 1);
+        
+        // Mejorar: Validar contra AGENDADA y CONFIRMADA
+        List<String> estadosOcupados = List.of("AGENDADA", "CONFIRMADA");
+        long cantidad = citaRepository.countByFechaHoraBetweenAndEstadoIn(inicio, fin, estadosOcupados);
 
-        long cantidad = citaRepository.countByFechaHoraBetweenAndEstado(inicio, fin, "AGENDADA");
         if (cantidad > 0) {
-            log.warn("Intento de agendamiento fallido: Cruce de horario en {} para duración de {} min", fechaHora, duracion);
-            throw new RuntimeException("Ya existe una cita agendada cerca de este horario (cruce de 30 minutos).");
+            log.warn("Intento de agendamiento fallido: Cruce en {} para una consulta de {} min", fechaHora, duracion);
+            throw new RuntimeException("Horario ocupado por otra cita confirmada o agendada (" + duracion + " min).");
         }
     }
     
