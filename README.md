@@ -19,6 +19,8 @@ Este sistema está diseñado para modernizar la atención veterinaria mediante u
 | **👥 Gestión de Clientes** | Registro completo, actualización y visualización detallada de propietarios. |
 | **🐕 Control de Mascotas** | Gestión de historias clínicas vinculadas a cada cliente. |
 | **📅 Agenda y Citas** | Programación dinámica de consultas y visualización del calendario médico. |
+| **🔔 Notificaciones Real-time** | Sistema de alertas con WebSockets (STOMP), sonidos de notificación y persistencia local. |
+| **🧠 Diagnóstico asistido** | Simulador de IA para pre-diagnósticos basados en síntomas y especies. |
 | **💳 Módulo de Pagos** | Procesamiento de pagos con soporte visual para **Yape y Plin** mediante QR. |
 
 ---
@@ -27,16 +29,17 @@ Este sistema está diseñado para modernizar la atención veterinaria mediante u
 El proyecto sigue un patrón **MVC (Model-View-Controller)** estructurado de la siguiente manera:
 
 ### 📂 Backend (Java & Spring Boot)
-* **`config/`**: Inicialización de datos maestros y configuración de seguridad.
+* **`config/`**: Configuración de seguridad, WebSockets (STOMP) y propiedades de la app.
 * **`controller/`**: Gestión de rutas. Destaca `RecepcionistaController.java` para toda la lógica de flujo.
 * **`model/`**: Entidades core (Cita, Mascota, Pago, Usuario, etc.).
 * **`repository/`**: Interfaces de comunicación con PostgreSQL vía JPA.
-* **`service/`**: Lógica de negocio (Cálculos de pagos y lógica de notificaciones).
+* **`service/`**: Lógica de negocio, validación de horarios en `AgendaService` y envío de notificaciones (Email y WebSocket).
 
 ### 📂 Frontend (Thymeleaf & Static Assets)
 * **`templates/`**: Vistas modulares segmentadas para el recepcionista (Dashboard, Diagnóstico, Formularios).
 * **`static/css/`**: Estilos independientes para cada módulo (Sidebar, Pagos, Perfil).
-* **`static/js/`**: Interactividad dinámica para la gestión de formularios y gráficos.
+* **`static/js/`**: Lógica de cliente. Destaca `notificaciones-ui.js` para la gestión de alertas en tiempo real.
+* **`static/audio/`**: Recursos sonoros para alertas del sistema.
 
 ---
 
@@ -49,8 +52,8 @@ El proyecto sigue un patrón **MVC (Model-View-Controller)** estructurado de la 
 - [x] **APF1:** Presentación de arquitectura y prototipo inicial.
 
 ### 🗓️ Unidad 2: Inteligencia y Notificaciones (Semanas 7-11)
-- [ ] **Módulo de Citas:** Lógica de `AgendaService` y validación de horarios.
-- [ ] **Notificaciones:** Implementación de alertas para recordatorios de citas.
+- [x] **Módulo de Citas:** Lógica de `AgendaService`, generación de slots y validación de horarios.
+- [x] **Notificaciones:** Alertas en tiempo real con WebSockets, historial persistente y sonidos.
 - [ ] **APF2:** Despliegue en la nube e integración de logs.
 
 ### 🗓️ Unidad 3: Finalización y Dashboard (Semanas 12-18)
@@ -61,7 +64,7 @@ El proyecto sigue un patrón **MVC (Model-View-Controller)** estructurado de la 
 ---
 
 ## 🛠️ Stack Tecnológico
-* **Backend:** Java 21, Spring Boot, Spring Security.
+* **Backend:** Java 21, Spring Boot, Spring Security, Spring WebSocket (STOMP).
 * **Base de Datos:** PostgreSQL.
 * **Frontend:** HTML5, CSS3, JavaScript, Thymeleaf.
 * **Herramientas:** Git, Maven, Docker.
