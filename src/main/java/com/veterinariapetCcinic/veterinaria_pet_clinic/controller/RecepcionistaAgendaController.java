@@ -1,5 +1,6 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -80,6 +81,9 @@ public class RecepcionistaAgendaController {
             if (fecha.isBefore(LocalDate.now())) {
                 throw new IllegalArgumentException("No se pueden generar horarios para una fecha pasada.");
             }
+            if (fecha.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                throw new IllegalArgumentException("La veterinaria no atiende los días domingos.");
+            }
             if (!horaFin.isAfter(horaInicio)) {
                 throw new IllegalArgumentException("La hora fin debe ser mayor a la hora inicio.");
             }
@@ -89,6 +93,10 @@ public class RecepcionistaAgendaController {
             long minutosTotales = ChronoUnit.MINUTES.between(horaInicio, horaFin);
             if (minutosTotales < duracionTurno) {
                 throw new IllegalArgumentException("El rango horario es menor a la duración del turno.");
+            }
+            // Inteligencia: Validamos que el bloque total encaje con la duración específica de esta cita
+            if (minutosTotales % duracionTurno != 0) {
+                throw new IllegalArgumentException("El tiempo total debe ser divisible exactamente por la duración de la cita (" + duracionTurno + " min).");
             }
 
             Usuario veterinario = null;

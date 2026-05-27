@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cliente;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
 
@@ -31,26 +32,17 @@ public class NotificacionService {
     @Autowired
     private CitaRepository citaRepository;
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    @Autowired
+    private AppProperties appProperties;
 
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final List<UINotification> uiNotifications = new CopyOnWriteArrayList<>();
 
-    public static class UINotification {
-        private String type; // e.g., "success", "info", "warning", "error"
-        private String message;
-        private String timestamp;
-
+    public record UINotification(String type, String message, String timestamp) {
         public UINotification(String type, String message) {
-            this.type = type;
-            this.message = message;
-            this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+            this(type, message, LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
         }
-
-        // Getters for JSON serialization
-        public String getType() { return type; }
-        public String getMessage() { return message; }
-        public String getTimestamp() { return timestamp; }
     }
 
     private void addUINotification(String type, String message) {
@@ -90,9 +82,10 @@ public class NotificacionService {
                 ⚠️ Su cita para el %s ha sido CANCELADA.
                 🐕 Mascota: %s
 
-                Para reagendar, comuníquese al +51 918 470 481.""",
+                Para reagendar, comuníquese al %s.""",
                 cita.getFechaHora().format(FORMATTER),
-                cita.getMascota().getNombre());
+                cita.getMascota().getNombre(),
+                appProperties.getCancellationPhone());
 
         Cliente cliente = cita.getMascota().getCliente();
         log.info("📧 Notificación de cancelación para: {}", cliente.getTelefono());
@@ -101,7 +94,7 @@ public class NotificacionService {
         enviarEmail(cliente.getEmail(),
                 "Cancelación de Cita Veterinaria - " + cita.getMascota().getNombre(),
                 mensaje);
-        addUINotification("warning", "Cita cancelada: " + cita.getMascota().getNombre() + " el " + cita.getFechaHora().format(FORMATTER));
+        addUINotification("warning", "Cita cancelada: " + cita.getMascota().getNombre() + " el " + cita.getFechaHora().format(FORMATTER) + ". Contacto: " + appProperties.getCancellationPhone());
     }
 
     public void enviarRecordatorioCita(Cita cita) {
@@ -192,7 +185,6 @@ public class NotificacionService {
                 (cita.getVeterinario() != null ? cita.getVeterinario().getId() : "No asignado"));
         log.info("📝 Mensaje:\n{}", mensaje);
     }
-    // Considerar añadir addUINotification aquí si quieres que las notificaciones de veterinario aparezcan para el recepcionista
 
     public void enviarInformeCliente(Cliente cliente, String mensaje) {
         String informe = String.format("""
@@ -210,7 +202,6 @@ public class NotificacionService {
         log.info("📝 Mensaje:\n{}", informe);
 
         enviarEmail(cliente.getEmail(), "Informe Veterinario", informe);
-        // Considerar añadir addUINotification aquí si quieres que los informes aparezcan para el recepcionista
     }
 
     public void enviarConfirmacionPago(Cliente cliente, Double monto, String metodoPago) {

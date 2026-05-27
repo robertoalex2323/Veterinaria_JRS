@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.config.AppProperties;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
 
 @Service
@@ -23,11 +24,13 @@ public class CitaService {
     private final CitaRepository citaRepository;
     private final NotificacionService notificacionService;
     private final AgendaService agendaService;
-    
-    public CitaService(CitaRepository citaRepository, NotificacionService notificacionService, AgendaService agendaService) {
+    private final AppProperties appProperties;
+
+    public CitaService(CitaRepository citaRepository, NotificacionService notificacionService, AgendaService agendaService, AppProperties appProperties) {
         this.citaRepository = citaRepository;
         this.notificacionService = notificacionService;
         this.agendaService = agendaService;
+        this.appProperties = appProperties;
     }
     
     @Transactional
@@ -117,13 +120,17 @@ public class CitaService {
             throw new RuntimeException("No se pueden agendar citas en fechas u horas del pasado.");
         }
         
-        // 2. Validar el horario de atención (ej. 08:00 a 20:00)
+        // 2. Validar el horario de atención 
+        LocalTime start = LocalTime.parse(appProperties.getBusiness().getStartTime());
+        LocalTime end = LocalTime.parse(appProperties.getBusiness().getEndTime());
         LocalTime hora = fechaHora.toLocalTime();
-        if (hora.isBefore(LocalTime.of(8, 0)) || hora.isAfter(LocalTime.of(20, 0))) {
-            throw new RuntimeException("La cita debe estar dentro del horario de atención (08:00 - 20:00).");
+        if (hora.isBefore(start) || hora.isAfter(end)) {
+            throw new RuntimeException(String.format("La cita debe estar dentro del horario de atención (%s - %s).",
+                appProperties.getBusiness().getStartTime(), 
+                appProperties.getBusiness().getEndTime()));
         }
         
-        // 3. Vincular con Agenda (verificar si el horario existe y está disponible)
+        // 3. Vincular con Agenda 
         com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda agenda = agendaService.buscarAgendaDisponible(fechaHora.toLocalDate(), hora);
         if (agenda == null) {
             log.warn("Horario no disponible en agenda para: {}", fechaHora);
