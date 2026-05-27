@@ -20,7 +20,6 @@ Este sistema está diseñado para modernizar la atención veterinaria mediante u
 | **🐕 Control de Mascotas** | Gestión de historias clínicas vinculadas a cada cliente. |
 | **📅 Agenda y Citas** | Programación dinámica de consultas y visualización del calendario médico. |
 | **🔔 Notificaciones Real-time** | Sistema de alertas con WebSockets (STOMP), sonidos de notificación y persistencia local. |
-| **🧠 Diagnóstico asistido** | Simulador de IA para pre-diagnósticos basados en síntomas y especies. |
 | **💳 Módulo de Pagos** | Procesamiento de pagos con soporte visual para **Yape y Plin** mediante QR. |
 
 ---
@@ -52,8 +51,8 @@ El proyecto sigue un patrón **MVC (Model-View-Controller)** estructurado de la 
 - [x] **APF1:** Presentación de arquitectura y prototipo inicial.
 
 ### 🗓️ Unidad 2: Inteligencia y Notificaciones (Semanas 7-11)
-- [x] **Módulo de Citas:** Lógica de `AgendaService`, generación de slots y validación de horarios.
-- [x] **Notificaciones:** Alertas en tiempo real con WebSockets, historial persistente y sonidos.
+- [ ] **Módulo de Citas:** Lógica de `AgendaService`, generación de slots y validación de horarios.
+- [ ] **Notificaciones:** Alertas en tiempo real con WebSockets, historial persistente y sonidos.
 - [ ] **APF2:** Despliegue en la nube e integración de logs.
 
 ### 🗓️ Unidad 3: Finalización y Dashboard (Semanas 12-18)
@@ -76,6 +75,6 @@ El proyecto sigue un patrón **MVC (Model-View-Controller)** estructurado de la 
    ```bash
    git clone [https://github.com/robertoalex2323/Veterinaria_Pet_Clinic.git](https://github.com/robertoalex2323/Veterinaria_Pet_Clinic.git)
    
-2. **CConfigurar DB: Ajustar application.properties con tus credenciales locales.**
-3. 
-1. **Ejecutar: ./mvnw spring-boot:run**
+2. **Configurar DB: Ajustar application.properties con tus credenciales locales.**
+
+3. **Ejecutar: ./mvnw spring-boot:run**
