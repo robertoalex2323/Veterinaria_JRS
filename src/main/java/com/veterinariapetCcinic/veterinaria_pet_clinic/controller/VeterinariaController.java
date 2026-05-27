@@ -28,7 +28,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Consulta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
-import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Seguimiento;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.SignosVitales;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
@@ -48,6 +47,8 @@ public class VeterinariaController {
     private final MascotaService mascotaService;
     private final ConsultaService consultaService;
     private final SeguimientoService seguimientoService;
+
+
     private final SignosVitalesService signosVitalesService;
     private final UsuarioRepository usuarioRepository;
 
@@ -316,7 +317,9 @@ public class VeterinariaController {
             @RequestParam(required = false) String tratamiento,
             @RequestParam(required = false) String medicacion,
             @RequestParam(required = false) String recomendaciones,
+            @RequestParam(required = false) Boolean tieneProximaCita,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate proximaCita,
+            @RequestParam(required = false) java.time.LocalTime proximaHora,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
             RedirectAttributes redirectAttributes) {
         try {
@@ -338,26 +341,28 @@ public class VeterinariaController {
                 consultaService.actualizar(consulta);
             }
 
-            seguimientoService.crearSeguimiento(
-                    mascotaId,
-                    consulta != null ? consulta.getId() : null,
-                    diagnostico != null && !diagnostico.isBlank() ? diagnostico : "Seguimiento posterior a triaje",
-                    "PENDIENTE",
-                    proximaCita != null ? proximaCita : LocalDate.now(),
-                    unirBloques(
-                            bloque("Urgencia clasificada", urgencia),
-                            bloque("Sintomas observados", sintomas),
-                            bloque("Plan de tratamiento", tratamiento),
-                            bloque("Medicacion prescrita", medicacion),
-                            bloque("Recomendaciones y cuidados", recomendaciones)
-                    )
-            );
+            // Si el veterinario marca que SÍ hay próxima cita, se crea y se bloquea el horario en Agenda.
+            if (Boolean.TRUE.equals(tieneProximaCita)) {
+                if (proximaCita == null || proximaHora == null) {
+                    throw new IllegalArgumentException("Debes indicar fecha y horario para la próxima cita.");
+                }
 
+                Cita proxima = new Cita();
+                proxima.setMascota(cita.getMascota());
+                proxima.setVeterinario(cita.getVeterinario());
+                proxima.setMotivo("Control / seguimiento");
+                proxima.setEstado("AGENDADA");
+                proxima.setFechaHora(LocalDateTime.of(proximaCita, proximaHora));
+
+                citaService.guardar(proxima);
+            }
+
+            // Actualizar estado de la cita actual
             cita.setEstado("ATENDIDA");
             citaService.actualizar(cita);
 
             redirectAttributes.addFlashAttribute("success",
-                    "Triaje finalizado para " + cita.getMascota().getNombre() + ". Seguimiento enviado al historial.");
+                    "Triaje finalizado para " + cita.getMascota().getNombre() + (Boolean.TRUE.equals(tieneProximaCita) ? ". Próxima cita programada." : ". Sin próxima cita programada."));
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error",
                     "Error al finalizar triaje: " + e.getMessage());
@@ -571,8 +576,8 @@ public class VeterinariaController {
             model.addAttribute("pesoFechas", construirFechasPeso(signos));
             model.addAttribute("pesoValores", construirValoresPeso(signos));
 
-            List<Seguimiento> seguimientos = seguimientoService.proximosSeguimientosPorMascota(mascotaId);
-            model.addAttribute("seguimientos", seguimientos != null ? seguimientos : new ArrayList<>());
+            // Seguimientos eliminados del historial (ya no se muestran en el módulo del veterinario)
+
 
         } catch (Exception e) {
             model.addAttribute("errorHistorial", "No se pudo cargar el historial: " + e.getMessage());

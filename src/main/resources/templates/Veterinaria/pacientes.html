@@ -260,8 +260,30 @@
             </div>
 
             <div class="modal-section">
-                <label class="consulta-label">Proxima Cita de Control</label>
-                <input type="date" name="proximaCita">
+                <label class="consulta-label">¿Va a tener una siguiente cita?</label>
+                <div class="next-cita-toggle" style="display:flex; gap:12px; align-items:center; margin-top:8px;">
+                    <label style="display:flex; gap:8px; align-items:center;">
+                        <input type="radio" name="tieneProximaCita" value="true" checked>
+                        <span>Sí</span>
+                    </label>
+                    <label style="display:flex; gap:8px; align-items:center;">
+                        <input type="radio" name="tieneProximaCita" value="false">
+                        <span>No</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-section" id="bloqueProximaCita">
+                <label class="consulta-label">Próxima Cita (fecha y horario)</label>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div>
+                        <input type="date" name="proximaCita" aria-label="Fecha próxima cita">
+                    </div>
+                    <div>
+                        <input type="time" name="proximaHora" aria-label="Horario próxima cita">
+                    </div>
+                </div>
+                <div style="font-size:12px; color:#7a8193; margin-top:8px;">Se programará automáticamente en Recepción si indicas que sí.</div>
             </div>
 
             <div class="modal-actions">
