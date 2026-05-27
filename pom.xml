@@ -67,11 +67,10 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- COBALT / WHATSAPP -->
+        <!-- WEBSOCKET -->
         <dependency>
-            <groupId>com.github.auties00</groupId>
-            <artifactId>cobalt</artifactId>
-            <version>0.0.10</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
 
             <!-- Evita conflictos SLF4J -->
             <exclusions>

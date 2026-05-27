@@ -20,12 +20,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 
 @Controller
 @RequestMapping("/recepcionista/agenda")
@@ -35,10 +37,12 @@ public class RecepcionistaAgendaController {
 
     private final AgendaService agendaService;
     private final UsuarioRepository usuarioRepository;
+    private final NotificacionService notificacionService;
 
-    public RecepcionistaAgendaController(AgendaService agendaService, UsuarioRepository usuarioRepository) {
+    public RecepcionistaAgendaController(AgendaService agendaService, UsuarioRepository usuarioRepository, NotificacionService notificacionService) {
         this.agendaService = agendaService;
         this.usuarioRepository = usuarioRepository;
+        this.notificacionService = notificacionService;
     }
 
     @GetMapping("/horarios")
@@ -202,5 +206,11 @@ public class RecepcionistaAgendaController {
                                 : ""))
                 .toList();
         return ResponseEntity.ok(payload);
+    }
+
+    @GetMapping("/api/ui-notifications")
+    @ResponseBody
+    public List<NotificacionService.UINotification> getNotifications() {
+        return notificacionService.getAndClearUINotifications();
     }
 }

@@ -28,7 +28,7 @@ public class AppProperties {
 
     public static class Business {
         private String startTime = "08:00";
-        private String endTime = "20:00";
+        private String endTime = "22:00";
         private int defaultSlotDuration = 30;
 
         public String getStartTime() {

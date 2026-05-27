@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,14 +27,23 @@ public class NotificacionService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificacionService.class);
 
-    @Autowired(required = false)
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
+    private final CitaRepository citaRepository;
+    private final AppProperties appProperties;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    @Autowired
-    private CitaRepository citaRepository;
-
-    @Autowired
-    private AppProperties appProperties;
+    // Nota: En Spring 4.3+, si solo hay un constructor, @Autowired es opcional.
+    // Mantenemos el calificador required=false solo para el mailSender.
+    public NotificacionService(
+            @Autowired(required = false) JavaMailSender mailSender,
+            CitaRepository citaRepository,
+            AppProperties appProperties,
+            SimpMessagingTemplate messagingTemplate) {
+        this.mailSender = mailSender;
+        this.citaRepository = citaRepository;
+        this.appProperties = appProperties;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -46,10 +56,13 @@ public class NotificacionService {
     }
 
     private void addUINotification(String type, String message) {
-        uiNotifications.add(new UINotification(type, message));
+        UINotification notification = new UINotification(type, message);
+        uiNotifications.add(notification);
         if (uiNotifications.size() > 50) { // Keep only the last 50 notifications
             uiNotifications.remove(0); // Remove the oldest notification
         }
+        // Enviar notificación en tiempo real vía WebSocket
+        messagingTemplate.convertAndSend("/topic/notifications", notification);
     }
 
     public void enviarConfirmacionCita(Cita cita) {
