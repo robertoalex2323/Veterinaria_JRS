@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const horaInicioInput = document.getElementById('horaInicio');
     const horaFinInput = document.getElementById('horaFin');
     const duracionInput = document.getElementById('duracionTurno');
+    const formGenerar = document.querySelector('form[action*="/horarios/generar"]');
 
     if (horaInicioInput && horaFinInput && duracionInput) {
         const calcularDiferencia = () => {
@@ -95,17 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const minutosFin = (h2 * 60) + m2;
                 const diferencia = minutosFin - minutosInicio;
 
+                const submitBtn = formGenerar ? formGenerar.querySelector('button[type="submit"]') : null;
+
                 if (diferencia > 0) {
                     duracionInput.value = diferencia;
                     
-                    // Validación: Si no es múltiplo de 30, pintamos el borde de rojo como advertencia
-                    if (diferencia % 30 !== 0) {
-                        duracionInput.style.borderColor = "#dc3545";
-                    } else {
-                        duracionInput.style.borderColor = "#ced4da";
-                    }
+                    // El sistema es flexible: el recepcionista decide la duración según la cita
+                    // Solo validamos que la diferencia sea positiva
+                    duracionInput.style.borderColor = "#ced4da";
+                    if (submitBtn) submitBtn.disabled = false;
+                    
                 } else {
                     duracionInput.value = '';
+                    duracionInput.style.borderColor = "#ced4da";
+                    if (submitBtn) submitBtn.disabled = true;
                 }
             }
         };

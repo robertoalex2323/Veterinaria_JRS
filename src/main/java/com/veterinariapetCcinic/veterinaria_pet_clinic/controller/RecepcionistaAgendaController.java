@@ -1,5 +1,6 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -19,12 +20,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.NotificacionService;
 
 @Controller
 @RequestMapping("/recepcionista/agenda")
@@ -34,10 +37,12 @@ public class RecepcionistaAgendaController {
 
     private final AgendaService agendaService;
     private final UsuarioRepository usuarioRepository;
+    private final NotificacionService notificacionService;
 
-    public RecepcionistaAgendaController(AgendaService agendaService, UsuarioRepository usuarioRepository) {
+    public RecepcionistaAgendaController(AgendaService agendaService, UsuarioRepository usuarioRepository, NotificacionService notificacionService) {
         this.agendaService = agendaService;
         this.usuarioRepository = usuarioRepository;
+        this.notificacionService = notificacionService;
     }
 
     @GetMapping("/horarios")
@@ -80,6 +85,9 @@ public class RecepcionistaAgendaController {
             if (fecha.isBefore(LocalDate.now())) {
                 throw new IllegalArgumentException("No se pueden generar horarios para una fecha pasada.");
             }
+            if (fecha.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                throw new IllegalArgumentException("La veterinaria no atiende los días domingos.");
+            }
             if (!horaFin.isAfter(horaInicio)) {
                 throw new IllegalArgumentException("La hora fin debe ser mayor a la hora inicio.");
             }
@@ -89,6 +97,10 @@ public class RecepcionistaAgendaController {
             long minutosTotales = ChronoUnit.MINUTES.between(horaInicio, horaFin);
             if (minutosTotales < duracionTurno) {
                 throw new IllegalArgumentException("El rango horario es menor a la duración del turno.");
+            }
+            // Inteligencia: Validamos que el bloque total encaje con la duración específica de esta cita
+            if (minutosTotales % duracionTurno != 0) {
+                throw new IllegalArgumentException("El tiempo total debe ser divisible exactamente por la duración de la cita (" + duracionTurno + " min).");
             }
 
             Usuario veterinario = null;
@@ -194,5 +206,11 @@ public class RecepcionistaAgendaController {
                                 : ""))
                 .toList();
         return ResponseEntity.ok(payload);
+    }
+
+    @GetMapping("/api/ui-notifications")
+    @ResponseBody
+    public List<NotificacionService.UINotification> getNotifications() {
+        return notificacionService.getAndClearUINotifications();
     }
 }
