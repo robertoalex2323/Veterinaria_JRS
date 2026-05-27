@@ -255,37 +255,7 @@
                         </div>
                     </div>
 
-                    <div class="panel historial-section">
-                        <div class="panel-header">
-                            <h2><i class="fas fa-clipboard-check" style="color:#f59e0b; margin-right:8px;"></i> Seguimiento</h2>
-                            <span class="badge" th:text="${seguimientos.size() + ' registros'}">0</span>
-                        </div>
-
-                        <div th:if="${seguimientos.empty}" class="triaje-empty" style="padding:24px 0;">
-                            <i class="fas fa-clipboard-list" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:8px;"></i>
-                            <p>Sin seguimientos registrados aun</p>
-                        </div>
-
-                        <div th:each="seguimiento : ${seguimientos}" class="consulta-item seguimiento-item">
-                            <div class="consulta-item-header">
-                                <div class="consulta-fecha">
-                                    <i class="far fa-calendar-check"></i>
-                                    <span th:text="${seguimiento.fechaProgramada != null ? #temporals.format(seguimiento.fechaProgramada, 'dd/MM/yyyy') : 'Sin fecha'}">Fecha</span>
-                                </div>
-                                <span class="consulta-estado-badge estado-activa" th:text="${seguimiento.estado}">PENDIENTE</span>
-                            </div>
-                            <div class="consulta-item-body">
-                                <div class="consulta-motivo">
-                                    <label>Diagnostico / motivo</label>
-                                    <p th:text="${seguimiento.descripcion != null ? seguimiento.descripcion : '-'}">-</p>
-                                </div>
-                                <div class="consulta-obs" th:if="${seguimiento.observaciones != null and !seguimiento.observaciones.empty}">
-                                    <label>Indicaciones</label>
-                                    <p th:text="${seguimiento.observaciones}">-</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+         
                 </div>
             </div>
         </div>
