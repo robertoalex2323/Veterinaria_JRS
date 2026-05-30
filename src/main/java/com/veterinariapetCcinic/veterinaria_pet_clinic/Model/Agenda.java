@@ -32,6 +32,7 @@ public class Agenda {
     private Integer duracionTurno; // minutos
     
     private Boolean disponible = true;
+    private String motivo;
     
     @ManyToOne
     @JoinColumn(name = "veterinario_id")
@@ -57,7 +58,11 @@ public class Agenda {
     
     public Boolean getDisponible() { return disponible; }
     public void setDisponible(Boolean disponible) { this.disponible = disponible; }
+
     
     public Usuario getVeterinario() { return veterinario; }
     public void setVeterinario(Usuario veterinario) { this.veterinario = veterinario; }
+
+    public String getMotivo() { return motivo; }
+    public void setMotivo(String motivo) { this.motivo = motivo; }
 }

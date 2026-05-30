@@ -3,6 +3,7 @@ package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Consulta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
@@ -32,6 +34,7 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.SignosVitales;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ConsultaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;
@@ -47,6 +50,7 @@ public class VeterinariaController {
     private final MascotaService mascotaService;
     private final ConsultaService consultaService;
     private final SeguimientoService seguimientoService;
+    private final AgendaService agendaService;
 
 
     private final SignosVitalesService signosVitalesService;
@@ -58,7 +62,7 @@ public class VeterinariaController {
                                   ConsultaService consultaService,
                                   SeguimientoService seguimientoService,
                                   SignosVitalesService signosVitalesService,
-                                  UsuarioRepository usuarioRepository) {
+                                  UsuarioRepository usuarioRepository,AgendaService agendaService) {
         this.citaRepository = citaRepository;
         this.citaService = citaService;
         this.mascotaService = mascotaService;
@@ -66,6 +70,7 @@ public class VeterinariaController {
         this.seguimientoService = seguimientoService;
         this.signosVitalesService = signosVitalesService;
         this.usuarioRepository = usuarioRepository;
+        this.agendaService = agendaService;
     }
 
     private String getUsername() {
@@ -321,6 +326,7 @@ public class VeterinariaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate proximaCita,
             @RequestParam(required = false) java.time.LocalTime proximaHora,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+            @RequestParam(required = false) Long proximoVeterinarioId,
             RedirectAttributes redirectAttributes) {
         try {
             Cita cita = citaService.buscarPorId(citaId);
@@ -343,18 +349,29 @@ public class VeterinariaController {
 
             // Si el veterinario marca que SÍ hay próxima cita, se crea y se bloquea el horario en Agenda.
             if (Boolean.TRUE.equals(tieneProximaCita)) {
-                if (proximaCita == null || proximaHora == null) {
-                    throw new IllegalArgumentException("Debes indicar fecha y horario para la próxima cita.");
+            if (proximaCita == null || proximaHora == null || proximoVeterinarioId == null) {
+          throw new IllegalArgumentException("Debes seleccionar fecha y horario disponible para la próxima cita.");
                 }
 
-                Cita proxima = new Cita();
-                proxima.setMascota(cita.getMascota());
-                proxima.setVeterinario(cita.getVeterinario());
-                proxima.setMotivo("Control / seguimiento");
-                proxima.setEstado("AGENDADA");
-                proxima.setFechaHora(LocalDateTime.of(proximaCita, proximaHora));
+            Agenda agendaDisponible = agendaService.buscarAgendaDisponible(proximaCita, proximaHora);
+            if (agendaDisponible == null) {
+            throw new IllegalArgumentException("El horario seleccionado ya no está disponible.");
+        }
 
-                citaService.guardar(proxima);
+if (agendaDisponible.getVeterinario() == null
+        || agendaDisponible.getVeterinario().getId() == null
+        || !agendaDisponible.getVeterinario().getId().equals(proximoVeterinarioId)) {
+    throw new IllegalArgumentException("El horario seleccionado no corresponde al veterinario asignado.");
+}
+
+Cita proxima = new Cita();
+proxima.setMascota(cita.getMascota());
+proxima.setVeterinario(agendaDisponible.getVeterinario());
+proxima.setMotivo("Control / seguimiento");
+proxima.setEstado("AGENDADA");
+proxima.setFechaHora(LocalDateTime.of(proximaCita, proximaHora));
+
+citaService.guardar(proxima);
             }
 
             // Actualizar estado de la cita actual
@@ -674,10 +691,48 @@ public class VeterinariaController {
 
     // ============ Otros endpoints ============
     @GetMapping("/agenda")
-    public String agenda(Model model) {
-        model.addAttribute("currentPage", "agenda");
-        return "Veterinaria/agenda";
+public String agenda(
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+        Model model) {
+    model.addAttribute("currentPage", "agenda");
+    usuarioRepository.findByUsername(getUsername()).ifPresent(u ->
+            model.addAttribute("nombreUsuario", u.getNombre()));
+
+    if (fecha == null) {
+        fecha = LocalDate.now();
     }
+
+    List<Agenda> horarios = agendaService.obtenerHorariosDelDia(fecha);
+    horarios.sort(Comparator.comparing(Agenda::getHoraInicio, Comparator.nullsLast(Comparator.naturalOrder())));
+
+    List<Cita> citas = citaService.obtenerCitasDelDia(fecha);
+
+    model.addAttribute("fecha", fecha);
+    model.addAttribute("horarios", horarios);
+    model.addAttribute("citas", citas != null ? citas : new ArrayList<>());
+    return "Veterinaria/agenda";
+}
+
+@GetMapping("/agenda/api/disponibles")
+@ResponseBody
+public ResponseEntity<List<Map<String, String>>> horariosDisponiblesVeterinaria(
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+    List<Map<String, String>> payload = agendaService.obtenerHorariosDisponibles(fecha).stream()
+            .filter(a -> a.getVeterinario() != null)
+            .sorted(Comparator.comparing(Agenda::getHoraInicio, Comparator.nullsLast(Comparator.naturalOrder())))
+            .map(a -> Map.of(
+                    "id", String.valueOf(a.getId()),
+                    "horaInicio", a.getHoraInicio() != null ? a.getHoraInicio().format(formatter) : "",
+                    "horaFin", a.getHoraFin() != null ? a.getHoraFin().format(formatter) : "",
+                    "veterinarioId", String.valueOf(a.getVeterinario().getId()),
+                    "veterinarioNombre", a.getVeterinario().getNombre() != null ? a.getVeterinario().getNombre() : ""
+            ))
+            .toList();
+
+    return ResponseEntity.ok(payload);
+}    
 
     @GetMapping("/vacunas")
     public String vacunas(Model model) {

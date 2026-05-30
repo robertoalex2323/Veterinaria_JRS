@@ -280,7 +280,19 @@
                         <input type="date" name="proximaCita" aria-label="Fecha próxima cita">
                     </div>
                     <div>
-                        <input type="time" name="proximaHora" aria-label="Horario próxima cita">
+                     <div class="next-appointment-grid">
+    <input type="date" id="proximaCitaFecha" name="proximaCita" aria-label="Fecha próxima cita">
+    <select id="proximaCitaHora" name="proximaHora" disabled>
+        <option value="">Seleccione una fecha primero...</option>
+    </select>
+</div>
+
+<input type="hidden" id="proximoVeterinarioId" name="proximoVeterinarioId">
+
+<div class="next-appointment-vet">
+    <i class="fas fa-user-md"></i>
+    <span id="proximoVeterinarioNombre">Se asigna según el horario seleccionado</span>
+</div>
                     </div>
                 </div>
                 <div style="font-size:12px; color:#7a8193; margin-top:8px;">Se programará automáticamente en Recepción si indicas que sí.</div>
@@ -441,6 +453,51 @@ document.getElementById('buscadorPaciente').addEventListener('input', function()
 setTimeout(() => {
     document.querySelectorAll('.alert-flash').forEach(el => el.style.opacity = '0');
 }, 4000);
+
+
+const proximaFecha = document.getElementById('proximaCitaFecha');
+const proximaHora = document.getElementById('proximaCitaHora');
+const proximoVetId = document.getElementById('proximoVeterinarioId');
+const proximoVetNombre = document.getElementById('proximoVeterinarioNombre');
+
+async function cargarHorariosProximaCita(fecha) {
+    proximaHora.innerHTML = '<option value="">Cargando horarios...</option>';
+    proximaHora.disabled = true;
+    proximoVetId.value = '';
+    proximoVetNombre.textContent = 'Se asigna según el horario seleccionado';
+
+    const res = await fetch(`/veterinaria/agenda/api/disponibles?fecha=${encodeURIComponent(fecha)}`);
+    const data = await res.json();
+
+    if (!Array.isArray(data) || data.length === 0) {
+        proximaHora.innerHTML = '<option value="">No hay horarios disponibles</option>';
+        return;
+    }
+
+    proximaHora.innerHTML = '<option value="">Seleccione un horario...</option>';
+    data.forEach(slot => {
+        const option = document.createElement('option');
+        option.value = slot.horaInicio;
+        option.textContent = `${slot.horaInicio} - ${slot.horaFin}`;
+        option.dataset.veterinarioId = slot.veterinarioId;
+        option.dataset.veterinarioNombre = slot.veterinarioNombre;
+        proximaHora.appendChild(option);
+    });
+
+    proximaHora.disabled = false;
+}
+
+if (proximaFecha && proximaHora) {
+    proximaFecha.addEventListener('change', () => {
+        if (proximaFecha.value) cargarHorariosProximaCita(proximaFecha.value);
+    });
+
+    proximaHora.addEventListener('change', () => {
+        const selected = proximaHora.options[proximaHora.selectedIndex];
+        proximoVetId.value = selected?.dataset.veterinarioId || '';
+        proximoVetNombre.textContent = selected?.dataset.veterinarioNombre || 'Se asigna según el horario seleccionado';
+    });
+}
 </script>
 </body>
 </html>
