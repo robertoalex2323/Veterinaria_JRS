@@ -617,12 +617,21 @@ citaService.guardar(proxima);
             List<SignosVitales> signos = signosVitalesService.ultimosRegistrosDeMascota(mascotaId, 10);
            if (signos != null && !signos.isEmpty()) {
     SignosVitales ultimo = signos.get(0);
+
+    if (ultimo.getEstadoTemperatura() == null || ultimo.getEstadoTemperatura().isBlank()
+            || ultimo.getEstadoFrecuenciaCardiaca() == null || ultimo.getEstadoFrecuenciaCardiaca().isBlank()
+            || ultimo.getEstadoFrecuenciaRespiratoria() == null || ultimo.getEstadoFrecuenciaRespiratoria().isBlank()
+            || ultimo.getEstadoGeneral() == null || ultimo.getEstadoGeneral().isBlank()) {
+        clasificarYGuardarSignos(ultimo, mascota, ultimo.getConsulta());
+    }
+
     model.addAttribute("ultimoSigno", ultimo);
     model.addAttribute("estadoTempTexto", textoEstadoVital(ultimo.getEstadoTemperatura()));
     model.addAttribute("estadoFcTexto", textoEstadoVital(ultimo.getEstadoFrecuenciaCardiaca()));
     model.addAttribute("estadoFrTexto", textoEstadoVital(ultimo.getEstadoFrecuenciaRespiratoria()));
     model.addAttribute("estadoGeneralTexto", textoEstadoVital(ultimo.getEstadoGeneral()));
 }
+
 
 
             // Seguimientos eliminados del historial (ya no se muestran en el módulo del veterinario)

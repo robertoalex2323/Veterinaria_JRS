@@ -167,35 +167,45 @@
                         </div>
                     </div>
 
-                    <div class="panel historial-section" th:if="${ultimoSigno != null}">
+                     <div class="panel historial-section" th:if="${ultimoSigno != null}">
     <div class="panel-header">
-        <h2><i class="fas fa-wave-square" style="color:#e879b0; margin-right:8px;"></i> Signos Vitales Actuales</h2>
+        <h2>
+            <i class="fas fa-wave-square" style="color:#e879b0; margin-right:8px;"></i>
+            Signos Vitales Actuales
+        </h2>
         <button type="button" class="btn-editar-signos" onclick="toggleEditarSignos()">
             <i class="fas fa-pen"></i> Editar
         </button>
     </div>
 
-    <div class="estado-general-vital" th:classappend="${ultimoSigno.estadoGeneral != null ? ' estado-' + ultimoSigno.estadoGeneral.toLowerCase() : ''}">
+    <div class="estado-general-vital"
+         th:classappend="${ultimoSigno.estadoGeneral != null ? ' estado-' + ultimoSigno.estadoGeneral.toLowerCase() : ''}">
         Estado general: <strong th:text="${estadoGeneralTexto}">Normal</strong>
     </div>
 
     <div class="signos-grid">
-        <div class="signo-card signo-temp">
+        <div class="signo-card signo-temp"
+             th:classappend="${ultimoSigno.estadoTemperatura != null ? ' estado-' + ultimoSigno.estadoTemperatura.toLowerCase().replace('_','-') : ''}">
             <label>Temperatura</label>
             <div class="signo-valor" th:text="${ultimoSigno.temperatura != null ? ultimoSigno.temperatura + ' C' : '-'}">-</div>
             <span class="signo-estado" th:text="${estadoTempTexto}">Normal</span>
         </div>
+
         <div class="signo-card signo-peso">
             <label>Peso</label>
             <div class="signo-valor" th:text="${ultimoSigno.peso != null ? ultimoSigno.peso + ' kg' : '-'}">-</div>
             <span class="signo-estado signo-estado-ok">Registrado</span>
         </div>
-        <div class="signo-card signo-fc">
+
+        <div class="signo-card signo-fc"
+             th:classappend="${ultimoSigno.estadoFrecuenciaCardiaca != null ? ' estado-' + ultimoSigno.estadoFrecuenciaCardiaca.toLowerCase().replace('_','-') : ''}">
             <label>FC</label>
             <div class="signo-valor" th:text="${ultimoSigno.frecuenciaCardiaca != null ? ultimoSigno.frecuenciaCardiaca + ' bpm' : '-'}">-</div>
             <span class="signo-estado" th:text="${estadoFcTexto}">Normal</span>
         </div>
-        <div class="signo-card signo-fr">
+
+        <div class="signo-card signo-fr"
+             th:classappend="${ultimoSigno.estadoFrecuenciaRespiratoria != null ? ' estado-' + ultimoSigno.estadoFrecuenciaRespiratoria.toLowerCase().replace('_','-') : ''}">
             <label>FR</label>
             <div class="signo-valor" th:text="${ultimoSigno.frecuenciaRespiratoria != null ? ultimoSigno.frecuenciaRespiratoria + ' rpm' : '-'}">-</div>
             <span class="signo-estado" th:text="${estadoFrTexto}">Normal</span>
@@ -229,7 +239,8 @@
         </div>
 
         <label class="advertencia-field">Advertencia clínica
-            <textarea name="advertencia" rows="3" placeholder="Ej: Medicación pendiente, pérdida de peso, requiere control urgente..."
+            <textarea name="advertencia" rows="3"
+                      placeholder="Ej: Medicación pendiente, pérdida de peso, requiere control urgente..."
                       th:text="${ultimoSigno.advertencia}"></textarea>
         </label>
 
@@ -239,32 +250,9 @@
         </div>
     </form>
 </div>
-                        <div class="panel-header">
-                            <h2><i class="fas fa-wave-square" style="color:#e879b0; margin-right:8px;"></i> Signos Vitales Actuales</h2>
-                        </div>
-                        <div class="signos-grid">
-                            <div class="signo-card signo-temp">
-                                <label>Temperatura</label>
-                                <div class="signo-valor" th:text="${ultimoSigno.temperatura != null ? ultimoSigno.temperatura + ' C' : '-'}">-</div>
-                                <span class="signo-estado">Normal</span>
-                            </div>
-                            <div class="signo-card signo-peso">
-                                <label>Peso</label>
-                                <div class="signo-valor" th:text="${ultimoSigno.peso != null ? ultimoSigno.peso + ' kg' : '-'}">-</div>
-                                <span class="signo-estado signo-estado-ok">Normal</span>
-                            </div>
-                            <div class="signo-card signo-fc">
-                                <label>FC</label>
-                                <div class="signo-valor" th:text="${ultimoSigno.frecuenciaCardiaca != null ? ultimoSigno.frecuenciaCardiaca + ' bpm' : '-'}">-</div>
-                                <span class="signo-estado">Normal</span>
-                            </div>
-                            <div class="signo-card signo-fr">
-                                <label>FR</label>
-                                <div class="signo-valor" th:text="${ultimoSigno.frecuenciaRespiratoria != null ? ultimoSigno.frecuenciaRespiratoria + ' rpm' : '-'}">-</div>
-                                <span class="signo-estado signo-estado-warn">Normal</span>
-                            </div>
-                        </div>
-                    </div>
+
+
+
 
                     <div class="panel historial-section" th:if="${pesoValores != null and !pesoValores.empty}">
                         <div class="panel-header">
