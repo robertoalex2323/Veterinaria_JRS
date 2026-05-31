@@ -81,14 +81,14 @@ MAX_HISTORY_MESSAGES = parse_history_limit(os.getenv("CHATBOT_HISTORY_LIMIT", "1
 
 chat_histories = defaultdict(lambda: deque(maxlen=MAX_HISTORY_MESSAGES))
 session_memory = defaultdict(dict)
-APP_VERSION = "2026-05-31-chatbot-natural-v3"
+APP_VERSION = "2026-05-31-chatbot-natural-v4"
 
 
 INTENT_KEYWORDS = {
     "emergency": (
         "emergencia", "urgencia", "convulsion", "convulsiona", "sangra", "sangrado",
         "no respira", "ahoga", "intoxic", "veneno", "atropell", "desmayo",
-        "no se levanta", "dolor intenso",
+        "no se levanta", "dolor intenso", "respirar", "atropello", "colapso",
     ),
     "appointment": (
         "cita", "agendar", "agenda", "reservar", "reserva", "manana", "tarde",
@@ -102,7 +102,11 @@ INTENT_KEYWORDS = {
     "system_data": ("cuantas citas", "citas hay", "mascotas registradas", "clientes existen", "clientes registrados", "resumen del sistema"),
     "hours": ("horario", "hora", "atienden", "abren", "cierran"),
     "feeding": ("alimento", "alimentacion", "comida", "croquetas", "dieta", "comer"),
-    "symptoms": ("no come", "no quiere comer", "vomita", "diarrea", "decaido", "tos", "cojea", "dolor"),
+    "symptoms": (
+        "no come", "no quiere comer", "vomita", "vomito", "diarrea", "decaido",
+        "tos", "cojea", "dolor", "fiebre", "sangre", "heces", "temblor",
+        "rasca", "picazon", "picor",
+    ),
     "pets": ("perro", "perros", "perrito", "perritos", "gato", "gatos", "gatito", "gatitos", "conejo", "hamster", "cobayo"),
     "greeting": ("hola", "buenos dias", "buenas tardes", "buenas noches"),
     "thanks": ("gracias", "muchas gracias", "te agradezco"),
@@ -256,6 +260,81 @@ def contains_keyword(text, keyword):
         return keyword in text
 
     return re.search(rf"\b{re.escape(keyword)}\b", text) is not None
+
+
+def has_intent_keyword(normalized_message, intent):
+    return any(contains_keyword(normalized_message, keyword) for keyword in INTENT_KEYWORDS[intent])
+
+
+def has_any_keyword(normalized_message, keywords):
+    return any(contains_keyword(normalized_message, keyword) for keyword in keywords)
+
+
+def detect_species(normalized_message):
+    if has_any_keyword(normalized_message, ("perro", "perrito", "canino")):
+        return "perro"
+    if has_any_keyword(normalized_message, ("gato", "gatito", "felino")):
+        return "gato"
+    if has_any_keyword(normalized_message, ("conejo", "hamster", "cobayo")):
+        return "mascota pequena"
+    return "mascota"
+
+
+def contextual_response(message, intent):
+    normalized_message = normalize_text(message)
+    species = detect_species(normalized_message)
+
+    mentions_vaccine = has_intent_keyword(normalized_message, "vaccines")
+    mentions_symptom = has_intent_keyword(normalized_message, "symptoms")
+    mentions_diarrhea = has_any_keyword(normalized_message, ("diarrea", "heces blandas", "heces liquidas"))
+    mentions_vomit = has_any_keyword(normalized_message, ("vomita", "vomito", "vomitos"))
+    mentions_not_eating = has_any_keyword(normalized_message, ("no come", "no quiere comer", "sin apetito"))
+
+    if mentions_vaccine and mentions_symptom:
+        if mentions_diarrhea:
+            return (
+                f"Si tu {species} tiene diarrea, no conviene elegir una vacuna por chat ni vacunarlo mientras esta enfermo. "
+                "Primero debe evaluarlo un veterinario para descartar infeccion, parasitos, alimento en mal estado u otra causa. "
+                "Cuanto tiempo lleva con diarrea y ha vomitado, tiene sangre en las heces o esta decaido?"
+            )
+        return (
+            f"Si tu {species} tiene sintomas, lo mas prudente es revisarlo antes de vacunar. "
+            "Las vacunas se aplican cuando la mascota esta clinicamente estable. "
+            "Cuanto tiempo lleva asi y que signos notas exactamente?"
+        )
+
+    if intent == "symptoms":
+        if mentions_diarrhea and mentions_vomit:
+            return (
+                f"Entiendo, diarrea y vomitos juntos pueden deshidratar rapido a tu {species}. "
+                "No le des medicamentos humanos; ofrece agua en pequenas cantidades y agenda una revision cuanto antes. "
+                "Hay sangre, fiebre, decaimiento fuerte o es cachorro?"
+            )
+        if mentions_diarrhea:
+            return (
+                f"Entiendo. En un {species}, la diarrea puede deberse a cambio de alimento, parasitos, infeccion o algo que comio. "
+                "Si dura mas de 24 horas, hay sangre, vomitos o decaimiento, conviene evaluarlo hoy. "
+                "Desde cuando empezo y que edad tiene?"
+            )
+        if mentions_not_eating:
+            return (
+                f"Entiendo tu preocupacion. Si tu {species} no come, necesito saber desde cuando, si toma agua y si hay vomitos, diarrea o decaimiento. "
+                "Si lleva mas de 24 horas sin comer o esta muy apagado, lo mejor es consulta veterinaria."
+            )
+
+    if intent == "vaccines":
+        if species == "perro":
+            return (
+                "Para perros, las vacunas suelen organizarse segun edad, cartilla y refuerzos: multiple canina y rabia son referencias comunes. "
+                "Para decirte cual corresponde, necesito edad, si ya tiene cartilla y cuando fue su ultima vacuna."
+            )
+        if species == "gato":
+            return (
+                "Para gatos, el plan depende de edad, estilo de vida y cartilla; suelen considerarse triple felina y rabia segun evaluacion. "
+                "Dime su edad y si vive solo en casa o tambien sale."
+            )
+
+    return None
 
 
 def detect_intent(message, history):
@@ -419,6 +498,10 @@ def choose_response(intent, history):
 
 
 def fallback_response(message, intent, history=None):
+    contextual = contextual_response(message, intent)
+    if contextual:
+        return contextual
+
     if intent == "emergency":
         return choose_response("emergency", history)
 
