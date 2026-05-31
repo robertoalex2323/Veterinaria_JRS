@@ -30,6 +30,11 @@
            title="Diagnóstico IA">
             <i class="fas fa-heartbeat"></i>
         </a>
+        <a href="/veterinaria/alertas" class="nav-link"
+   th:classappend="${currentPage == 'alertas' ? ' active' : ''}"
+   title="Alertas">
+    <i class="fas fa-bell"></i>
+</a>
         <!-- Agenda -->
         <a href="/veterinaria/agenda" class="nav-link"
            th:classappend="${currentPage == 'agenda' ? ' active' : ''}"

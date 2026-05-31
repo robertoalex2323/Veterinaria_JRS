@@ -920,3 +920,95 @@
         max-width: 96vw;
     }
 }
+
+
+
+.estado-general-vital {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    background: #eef8ff;
+    color: #28628f;
+    font-weight: 700;
+}
+
+.estado-general-vital.estado-critico {
+    background: #ffe4ea;
+    color: #be123c;
+}
+
+.estado-general-vital.estado-advertencia {
+    background: #fff2cf;
+    color: #b45309;
+}
+
+.btn-editar-signos {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.editar-signos-form {
+    margin-top: 18px;
+    border-top: 1px solid #edf0f7;
+    padding-top: 18px;
+}
+
+.editar-signos-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.editar-signos-grid label,
+.advertencia-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.editar-signos-grid input,
+.advertencia-field textarea {
+    width: 100%;
+    border: 1.5px solid #e3e8f2;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-family: inherit;
+    color: #243044;
+}
+
+.advertencia-field {
+    margin-top: 14px;
+}
+
+.historial-warning {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: #fff2cf;
+    color: #9a5b00;
+    border: 1px solid #facc15;
+    border-radius: 16px;
+    padding: 13px 15px;
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .editar-signos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .editar-signos-grid {
+        grid-template-columns: 1fr;
+    }
+}

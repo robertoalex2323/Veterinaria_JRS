@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Agenda;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.AlertaCritica;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Cita;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Consulta;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Mascota;
@@ -35,11 +36,13 @@ import com.veterinariapetCcinic.veterinaria_pet_clinic.Model.Usuario;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.CitaRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.repository.UsuarioRepository;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AgendaService;
+import com.veterinariapetCcinic.veterinaria_pet_clinic.service.AlertaCriticaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.CitaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.ConsultaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.MascotaService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SeguimientoService;
 import com.veterinariapetCcinic.veterinaria_pet_clinic.service.SignosVitalesService;
+
 
 @Controller
 @RequestMapping("/veterinaria")
@@ -51,6 +54,7 @@ public class VeterinariaController {
     private final ConsultaService consultaService;
     private final SeguimientoService seguimientoService;
     private final AgendaService agendaService;
+    private final AlertaCriticaService alertaCriticaService;
 
 
     private final SignosVitalesService signosVitalesService;
@@ -62,7 +66,7 @@ public class VeterinariaController {
                                   ConsultaService consultaService,
                                   SeguimientoService seguimientoService,
                                   SignosVitalesService signosVitalesService,
-                                  UsuarioRepository usuarioRepository,AgendaService agendaService) {
+                                  UsuarioRepository usuarioRepository,AgendaService agendaService ,AlertaCriticaService alertaCriticaService) {
         this.citaRepository = citaRepository;
         this.citaService = citaService;
         this.mascotaService = mascotaService;
@@ -71,6 +75,8 @@ public class VeterinariaController {
         this.signosVitalesService = signosVitalesService;
         this.usuarioRepository = usuarioRepository;
         this.agendaService = agendaService;
+        this.alertaCriticaService = alertaCriticaService;
+        
     }
 
     private String getUsername() {
@@ -291,14 +297,15 @@ public class VeterinariaController {
                     obsCompleta.isEmpty() ? null : obsCompleta
             );
 
-            // Guardar signos vitales
-            signosVitalesService.crearSignosVitales(
-                    cita.getMascota().getId(),
-                    consulta.getId(),
-                    peso, temperatura,
-                    frecuenciaCardiaca, frecuenciaRespiratoria,
-                    observaciones
-            );
+         SignosVitales signos = signosVitalesService.crearSignosVitales(
+        cita.getMascota().getId(),
+        consulta.getId(),
+        peso, temperatura,
+        frecuenciaCardiaca, frecuenciaRespiratoria,
+        observaciones
+);
+
+clasificarYGuardarSignos(signos, cita.getMascota(), consulta);
 
             // Cambiar estado de la cita
             cita.setEstado("EN_CONSULTA");
@@ -608,12 +615,15 @@ citaService.guardar(proxima);
             model.addAttribute("consultas", consultas != null ? consultas : new ArrayList<>());
 
             List<SignosVitales> signos = signosVitalesService.ultimosRegistrosDeMascota(mascotaId, 10);
-            if (signos != null && !signos.isEmpty()) {
-                model.addAttribute("ultimoSigno", signos.get(0));
-            }
-            model.addAttribute("historialSignos", signos != null ? signos : new ArrayList<>());
-            model.addAttribute("pesoFechas", construirFechasPeso(signos));
-            model.addAttribute("pesoValores", construirValoresPeso(signos));
+           if (signos != null && !signos.isEmpty()) {
+    SignosVitales ultimo = signos.get(0);
+    model.addAttribute("ultimoSigno", ultimo);
+    model.addAttribute("estadoTempTexto", textoEstadoVital(ultimo.getEstadoTemperatura()));
+    model.addAttribute("estadoFcTexto", textoEstadoVital(ultimo.getEstadoFrecuenciaCardiaca()));
+    model.addAttribute("estadoFrTexto", textoEstadoVital(ultimo.getEstadoFrecuenciaRespiratoria()));
+    model.addAttribute("estadoGeneralTexto", textoEstadoVital(ultimo.getEstadoGeneral()));
+}
+
 
             // Seguimientos eliminados del historial (ya no se muestran en el módulo del veterinario)
 
@@ -657,6 +667,163 @@ citaService.guardar(proxima);
         }
         return String.join(",", pesos);
     }
+
+private void clasificarYGuardarSignos(SignosVitales signos, Mascota mascota, Consulta consulta) {
+    String especie = mascota != null && mascota.getEspecie() != null
+            ? mascota.getEspecie().toLowerCase()
+            : "";
+
+    String estadoTemp = clasificarTemperatura(especie, signos.getTemperatura());
+    String estadoFc = clasificarFrecuenciaCardiaca(especie, signos.getFrecuenciaCardiaca());
+    String estadoFr = clasificarFrecuenciaRespiratoria(especie, signos.getFrecuenciaRespiratoria());
+    String estadoGeneral = estadoGeneral(estadoTemp, estadoFc, estadoFr);
+
+    signos.setEstadoTemperatura(estadoTemp);
+    signos.setEstadoFrecuenciaCardiaca(estadoFc);
+    signos.setEstadoFrecuenciaRespiratoria(estadoFr);
+    signos.setEstadoGeneral(estadoGeneral);
+
+    signosVitalesService.guardar(signos);
+
+    if ("CRITICO".equals(estadoGeneral)) {
+        alertaCriticaService.crearAlerta(
+                mascota.getId(),
+                consulta != null ? consulta.getId() : null,
+                "SIGNOS_VITALES_CRITICOS",
+                "Paciente con signos vitales críticos. Temp: " + signos.getTemperatura()
+                        + ", FC: " + signos.getFrecuenciaCardiaca()
+                        + ", FR: " + signos.getFrecuenciaRespiratoria(),
+                "CRITICA"
+        );
+    }
+}
+
+private String clasificarTemperatura(String especie, Double temp) {
+    if (temp == null) return "SIN_DATOS";
+
+    if (especie.contains("perro")) {
+        if (temp < 36.0) return "CRITICO_BAJO";
+        if (temp <= 37.9) return "BAJO";
+        if (temp <= 39.2) return "NORMAL";
+        if (temp <= 40.5) return "ALTO";
+        return "CRITICO_ALTO";
+    }
+
+    if (especie.contains("gato")) {
+        if (temp < 36.5) return "CRITICO_BAJO";
+        if (temp <= 37.9) return "BAJO";
+        if (temp <= 39.3) return "NORMAL";
+        if (temp <= 40.5) return "ALTO";
+        return "CRITICO_ALTO";
+    }
+
+    if (especie.contains("ave") || especie.contains("loro")) {
+        if (temp < 39.0) return "CRITICO_BAJO";
+        if (temp <= 40.4) return "BAJO";
+        if (temp <= 42.0) return "NORMAL";
+        if (temp <= 43.0) return "ALTO";
+        return "CRITICO_ALTO";
+    }
+
+    if (especie.contains("tortuga")) {
+        if (temp < 22.0) return "CRITICO_BAJO";
+        if (temp <= 24.0) return "BAJO";
+        if (temp <= 30.0) return "NORMAL";
+        if (temp <= 33.0) return "ALTO";
+        return "CRITICO_ALTO";
+    }
+
+    if (especie.contains("camaleon") || especie.contains("camaleón")) {
+        if (temp < 20.0) return "CRITICO_BAJO";
+        if (temp <= 23.0) return "BAJO";
+        if (temp <= 30.0) return "NORMAL";
+        if (temp <= 34.0) return "ALTO";
+        return "CRITICO_ALTO";
+    }
+
+    if (temp < 36.0) return "CRITICO_BAJO";
+    if (temp <= 37.9) return "BAJO";
+    if (temp <= 39.2) return "NORMAL";
+    if (temp <= 40.5) return "ALTO";
+    return "CRITICO_ALTO";
+}
+
+private String clasificarFrecuenciaCardiaca(String especie, Integer fc) {
+    if (fc == null) return "SIN_DATOS";
+
+    if (especie.contains("perro")) {
+        if (fc < 50) return "CRITICO_BAJO";
+        if (fc <= 69) return "BAJO";
+        if (fc <= 160) return "NORMAL";
+        if (fc <= 200) return "ALTO";
+        return "CRITICO_ALTO";
+    }
+
+    if (especie.contains("gato")) {
+        if (fc < 100) return "CRITICO_BAJO";
+        if (fc <= 139) return "BAJO";
+        if (fc <= 220) return "NORMAL";
+        if (fc <= 260) return "ALTO";
+        return "CRITICO_ALTO";
+    }
+
+    return "NORMAL";
+}
+
+private String clasificarFrecuenciaRespiratoria(String especie, Integer fr) {
+    if (fr == null) return "SIN_DATOS";
+
+    if (especie.contains("perro")) {
+        if (fr < 8) return "CRITICO_BAJO";
+        if (fr <= 11) return "BAJO";
+        if (fr <= 30) return "NORMAL";
+        if (fr <= 60) return "ALTO";
+        return "CRITICO_ALTO";
+    }
+
+    if (especie.contains("gato")) {
+        if (fr < 15) return "CRITICO_BAJO";
+        if (fr <= 21) return "BAJO";
+        if (fr <= 30) return "NORMAL";
+        if (fr <= 60) return "ALTO";
+        return "CRITICO_ALTO";
+    }
+
+    return "NORMAL";
+}
+
+private String estadoGeneral(String temp, String fc, String fr) {
+    if (esCritico(temp) || esCritico(fc) || esCritico(fr)) {
+        return "CRITICO";
+    }
+    if (esAdvertencia(temp) || esAdvertencia(fc) || esAdvertencia(fr)) {
+        return "ADVERTENCIA";
+    }
+    return "NORMAL";
+}
+
+private boolean esCritico(String estado) {
+    return "CRITICO_BAJO".equals(estado) || "CRITICO_ALTO".equals(estado);
+}
+
+private boolean esAdvertencia(String estado) {
+    return "BAJO".equals(estado) || "ALTO".equals(estado);
+}
+
+private String textoEstadoVital(String estado) {
+    if (estado == null) return "Sin datos";
+    return switch (estado) {
+        case "CRITICO_BAJO" -> "Crítico bajo";
+        case "BAJO" -> "Bajo";
+        case "NORMAL" -> "Normal";
+        case "ALTO" -> "Alto";
+        case "CRITICO_ALTO" -> "Crítico alto";
+        case "CRITICO" -> "Crítico";
+        case "ADVERTENCIA" -> "Advertencia";
+        default -> "Sin datos";
+    };
+}
+    
 
     // ============ API JSON para historial ============
     @GetMapping("/api/historial/{mascotaId}")
@@ -734,6 +901,46 @@ public String agenda(
     model.addAttribute("citas", citas != null ? citas : new ArrayList<>());
     return "Veterinaria/agenda";
 }
+ @PostMapping("/historial/signos/{id}/actualizar")
+public String actualizarSignosVitales(
+        @PathVariable Long id,
+        @RequestParam Long mascotaId,
+        @RequestParam(required = false) String estado,
+        @RequestParam(required = false) Double peso,
+        @RequestParam(required = false) Double temperatura,
+        @RequestParam(required = false) Integer frecuenciaCardiaca,
+        @RequestParam(required = false) Integer frecuenciaRespiratoria,
+        @RequestParam(required = false) String advertencia,
+        RedirectAttributes redirectAttributes) {
+    try {
+        SignosVitales signos = signosVitalesService.buscarPorId(id);
+        signos.setPeso(peso);
+        signos.setTemperatura(temperatura);
+        signos.setFrecuenciaCardiaca(frecuenciaCardiaca);
+        signos.setFrecuenciaRespiratoria(frecuenciaRespiratoria);
+        signos.setAdvertencia(advertencia);
+
+        Mascota mascota = mascotaService.buscarPorId(mascotaId);
+        clasificarYGuardarSignos(signos, mascota, signos.getConsulta());
+
+        if (advertencia != null && !advertencia.isBlank()) {
+            alertaCriticaService.crearAlerta(
+                    mascotaId,
+                    signos.getConsulta() != null ? signos.getConsulta().getId() : null,
+                    "ADVERTENCIA_CLINICA",
+                    advertencia,
+                    "ADVERTENCIA"
+            );
+        }
+
+        redirectAttributes.addFlashAttribute("success", "Signos vitales actualizados correctamente.");
+    } catch (Exception e) {
+        redirectAttributes.addFlashAttribute("error", "No se pudieron actualizar los signos: " + e.getMessage());
+    }
+
+    return "redirect:/veterinaria/historial/" + mascotaId + "?estado=" + (estado != null ? estado : "activos");
+} 
+
 
 @GetMapping("/agenda/api/disponibles")
 @ResponseBody
@@ -763,10 +970,38 @@ public ResponseEntity<List<Map<String, String>>> horariosDisponiblesVeterinaria(
     }
 
     @GetMapping("/alertas")
-    public String alertas(Model model) {
-        model.addAttribute("currentPage", "alertas");
-        return "Veterinaria/alertas";
+public String alertas(Model model) {
+    model.addAttribute("currentPage", "alertas");
+
+    List<AlertaCritica> pendientes = alertaCriticaService.buscarPendientes();
+
+    List<AlertaCritica> criticas = pendientes.stream()
+            .filter(a -> "CRITICA".equalsIgnoreCase(a.getPrioridad()))
+            .toList();
+
+    List<AlertaCritica> advertencias = pendientes.stream()
+            .filter(a -> "ADVERTENCIA".equalsIgnoreCase(a.getPrioridad()))
+            .toList();
+
+    model.addAttribute("alertasCriticas", criticas);
+    model.addAttribute("advertencias", advertencias);
+    model.addAttribute("totalCriticas", criticas.size());
+    model.addAttribute("totalAdvertencias", advertencias.size());
+
+    return "Veterinaria/alertas";
+}
+
+@PostMapping("/alertas/{id}/resolver")
+public String resolverAlerta(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    try {
+        Usuario usuario = getUsuarioActual();
+        alertaCriticaService.resolverAlerta(id, usuario != null ? usuario.getId() : null, null);
+        redirectAttributes.addFlashAttribute("success", "Alerta marcada como resuelta.");
+    } catch (Exception e) {
+        redirectAttributes.addFlashAttribute("error", "No se pudo resolver la alerta: " + e.getMessage());
     }
+    return "redirect:/veterinaria/alertas";
+}
 
     @GetMapping("/diagnostico-ia")
     public String diagnosticoIA(Model model) {

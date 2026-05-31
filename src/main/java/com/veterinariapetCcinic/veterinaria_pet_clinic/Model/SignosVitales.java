@@ -31,6 +31,13 @@ public class SignosVitales {
     private Double temperatura;
     private Integer frecuenciaCardiaca;
     private Integer frecuenciaRespiratoria;
+    private String estadoTemperatura;
+    private String estadoFrecuenciaCardiaca;
+    private String estadoFrecuenciaRespiratoria;
+    private String estadoGeneral;
+
+    @Column(columnDefinition = "TEXT")
+    private String advertencia;
 
     @Column(columnDefinition = "TEXT")
     private String observaciones;
@@ -64,6 +71,20 @@ public class SignosVitales {
 
     public LocalDateTime getFechaRegistro() { return fechaRegistro; }
     public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
+     public String getEstadoTemperatura() { return estadoTemperatura; }
+    public void setEstadoTemperatura(String estadoTemperatura) { this.estadoTemperatura = estadoTemperatura; }
+
+    public String getEstadoFrecuenciaCardiaca() { return estadoFrecuenciaCardiaca; }
+    public void setEstadoFrecuenciaCardiaca(String estadoFrecuenciaCardiaca) { this.estadoFrecuenciaCardiaca = estadoFrecuenciaCardiaca; }
+
+    public String getEstadoFrecuenciaRespiratoria() { return estadoFrecuenciaRespiratoria; }
+public void setEstadoFrecuenciaRespiratoria(String estadoFrecuenciaRespiratoria) { this.estadoFrecuenciaRespiratoria = estadoFrecuenciaRespiratoria; }
+
+public String getEstadoGeneral() { return estadoGeneral; }
+public void setEstadoGeneral(String estadoGeneral) { this.estadoGeneral = estadoGeneral; }
+
+public String getAdvertencia() { return advertencia; }
+public void setAdvertencia(String advertencia) { this.advertencia = advertencia; }
 }
 
 

@@ -168,6 +168,77 @@
                     </div>
 
                     <div class="panel historial-section" th:if="${ultimoSigno != null}">
+    <div class="panel-header">
+        <h2><i class="fas fa-wave-square" style="color:#e879b0; margin-right:8px;"></i> Signos Vitales Actuales</h2>
+        <button type="button" class="btn-editar-signos" onclick="toggleEditarSignos()">
+            <i class="fas fa-pen"></i> Editar
+        </button>
+    </div>
+
+    <div class="estado-general-vital" th:classappend="${ultimoSigno.estadoGeneral != null ? ' estado-' + ultimoSigno.estadoGeneral.toLowerCase() : ''}">
+        Estado general: <strong th:text="${estadoGeneralTexto}">Normal</strong>
+    </div>
+
+    <div class="signos-grid">
+        <div class="signo-card signo-temp">
+            <label>Temperatura</label>
+            <div class="signo-valor" th:text="${ultimoSigno.temperatura != null ? ultimoSigno.temperatura + ' C' : '-'}">-</div>
+            <span class="signo-estado" th:text="${estadoTempTexto}">Normal</span>
+        </div>
+        <div class="signo-card signo-peso">
+            <label>Peso</label>
+            <div class="signo-valor" th:text="${ultimoSigno.peso != null ? ultimoSigno.peso + ' kg' : '-'}">-</div>
+            <span class="signo-estado signo-estado-ok">Registrado</span>
+        </div>
+        <div class="signo-card signo-fc">
+            <label>FC</label>
+            <div class="signo-valor" th:text="${ultimoSigno.frecuenciaCardiaca != null ? ultimoSigno.frecuenciaCardiaca + ' bpm' : '-'}">-</div>
+            <span class="signo-estado" th:text="${estadoFcTexto}">Normal</span>
+        </div>
+        <div class="signo-card signo-fr">
+            <label>FR</label>
+            <div class="signo-valor" th:text="${ultimoSigno.frecuenciaRespiratoria != null ? ultimoSigno.frecuenciaRespiratoria + ' rpm' : '-'}">-</div>
+            <span class="signo-estado" th:text="${estadoFrTexto}">Normal</span>
+        </div>
+    </div>
+
+    <div th:if="${ultimoSigno.advertencia != null and !ultimoSigno.advertencia.empty}" class="historial-warning">
+        <i class="fas fa-triangle-exclamation"></i>
+        <span th:text="${ultimoSigno.advertencia}">Advertencia</span>
+    </div>
+
+    <form id="formEditarSignos" class="editar-signos-form" style="display:none;"
+          th:action="@{/veterinaria/historial/signos/{id}/actualizar(id=${ultimoSigno.id})}"
+          method="post">
+        <input type="hidden" name="mascotaId" th:value="${mascotaSeleccionada.id}">
+        <input type="hidden" name="estado" th:value="${estadoFiltro}">
+
+        <div class="editar-signos-grid">
+            <label>Peso
+                <input type="number" step="0.01" name="peso" th:value="${ultimoSigno.peso}">
+            </label>
+            <label>Temperatura
+                <input type="number" step="0.1" name="temperatura" th:value="${ultimoSigno.temperatura}">
+            </label>
+            <label>FC
+                <input type="number" name="frecuenciaCardiaca" th:value="${ultimoSigno.frecuenciaCardiaca}">
+            </label>
+            <label>FR
+                <input type="number" name="frecuenciaRespiratoria" th:value="${ultimoSigno.frecuenciaRespiratoria}">
+            </label>
+        </div>
+
+        <label class="advertencia-field">Advertencia clínica
+            <textarea name="advertencia" rows="3" placeholder="Ej: Medicación pendiente, pérdida de peso, requiere control urgente..."
+                      th:text="${ultimoSigno.advertencia}"></textarea>
+        </label>
+
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" onclick="toggleEditarSignos()">Cancelar</button>
+            <button type="submit" class="btn-modal-confirm">Guardar signos</button>
+        </div>
+    </form>
+</div>
                         <div class="panel-header">
                             <h2><i class="fas fa-wave-square" style="color:#e879b0; margin-right:8px;"></i> Signos Vitales Actuales</h2>
                         </div>
@@ -332,6 +403,12 @@ if (buscadorHistorialPanel) {
     buscadorHistorialPanel.addEventListener('input', function() {
         filtrarItems(this.value.toLowerCase());
     });
+}
+
+function toggleEditarSignos() {
+    const form = document.getElementById('formEditarSignos');
+    if (!form) return;
+    form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
 }
 </script>
 </body>
