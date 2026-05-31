@@ -222,7 +222,7 @@ public class VeterinariaController {
         LocalDateTime fin    = fecha.atTime(LocalTime.MAX);
 
         // JOIN FETCH trae mascota + cliente en una sola query → sin Lazy problems
-        List<Cita> todasHoy = citaRepository.findCitasDelDiaConDatos(inicio, fin);
+       List<Cita> todasHoy = eliminarCitasDuplicadas(citaRepository.findCitasDelDiaConDatos(inicio, fin));
 
         List<Cita> esperandoTriaje = todasHoy.stream()
                 .filter(c -> "AGENDADA".equalsIgnoreCase(c.getEstado()))
@@ -457,6 +457,28 @@ citaService.guardar(proxima);
         model.addAttribute("totalActivas", totalActivas);
         model.addAttribute("totalBaja", totalBaja);
     }
+
+    private List<Cita> eliminarCitasDuplicadas(List<Cita> citas) {
+    if (citas == null) {
+        return new ArrayList<>();
+    }
+
+    Map<String, Cita> unicas = new LinkedHashMap<>();
+
+    for (Cita cita : citas) {
+        if (cita == null || cita.getMascota() == null || cita.getFechaHora() == null) {
+            continue;
+        }
+
+        String clave = cita.getMascota().getId() + "|"
+                + cita.getFechaHora().toString() + "|"
+                + (cita.getEstado() != null ? cita.getEstado() : "");
+
+        unicas.putIfAbsent(clave, cita);
+    }
+
+    return new ArrayList<>(unicas.values());
+}
 
     private List<Mascota> filtrarPorEstadoClinico(List<Mascota> mascotas, String estado) {
         List<Mascota> base = mascotas != null ? mascotas : new ArrayList<>();
@@ -705,7 +727,7 @@ public String agenda(
     List<Agenda> horarios = agendaService.obtenerHorariosDelDia(fecha);
     horarios.sort(Comparator.comparing(Agenda::getHoraInicio, Comparator.nullsLast(Comparator.naturalOrder())));
 
-    List<Cita> citas = citaService.obtenerCitasDelDia(fecha);
+    List<Cita> citas = eliminarCitasDuplicadas(citaService.obtenerCitasDelDia(fecha));
 
     model.addAttribute("fecha", fecha);
     model.addAttribute("horarios", horarios);

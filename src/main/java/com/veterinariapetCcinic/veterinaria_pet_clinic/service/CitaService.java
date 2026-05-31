@@ -26,6 +26,14 @@ public class CitaService {
     
     @Transactional
     public Cita guardar(Cita cita) {
+
+        if (cita.getMascota() != null && cita.getMascota().getId() != null
+        && citaRepository.existsByMascotaIdAndFechaHoraAndEstadoNot(
+                cita.getMascota().getId(),
+                cita.getFechaHora(),
+                "CANCELADA")) {
+    throw new RuntimeException("Ya existe una cita registrada para esta mascota en ese horario.");
+}
         validarDisponibilidad(cita.getFechaHora());
         
         // Bloquear horario en la agenda automáticamente

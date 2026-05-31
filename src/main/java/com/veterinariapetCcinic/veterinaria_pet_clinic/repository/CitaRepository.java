@@ -48,4 +48,6 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
            "WHERE c.fechaHora BETWEEN :inicio AND :fin")
     List<Cita> findCitasDelDiaConDatos(@Param("inicio") LocalDateTime inicio,
                                         @Param("fin") LocalDateTime fin);
+
+       boolean existsByMascotaIdAndFechaHoraAndEstadoNot(Long mascotaId, LocalDateTime fechaHora, String estado);
 }
