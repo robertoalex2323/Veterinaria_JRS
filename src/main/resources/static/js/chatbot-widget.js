@@ -103,7 +103,7 @@
                     messages.appendChild(createMessage(data.response || 'No tengo una respuesta disponible en este momento.', 'bot'));
                 })
                 .catch(function () {
-                    messages.appendChild(createMessage('El asistente no esta disponible. Verifica que el microservicio Flask este iniciado en http://localhost:5000.', 'bot vet-chatbot__message--error'));
+                    messages.appendChild(createMessage('Ahora no puedo responder desde el asistente. Intentalo nuevamente en unos segundos o comunicate directamente con recepcion.', 'bot vet-chatbot__message--error'));
                 })
                 .finally(function () {
                     if (typing.parentNode) {

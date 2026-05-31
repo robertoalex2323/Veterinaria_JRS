@@ -48,10 +48,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Solo ADMIN y ADMINISTRADOR pueden acceder a estas rutas
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "ADMINISTRADOR")
+                        .requestMatchers("/usuarios/**", "/configuracion/**").hasAnyRole("ADMIN", "ADMINISTRADOR")
 
                         // Recursos públicos
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/Imagen/**").permitAll()
+                        .requestMatchers("/api/chatbot/**").permitAll()
                         .requestMatchers("/login").permitAll()
+                        .requestMatchers("/veterinario/**").hasRole("VETERINARIO")
+                        .requestMatchers("/veterinaria/**").hasRole("VETERINARIO")
 
                         // Solo RECEPCIONISTA puede acceder a estas rutas
                         .requestMatchers("/recepcionista/**").hasRole("RECEPCIONISTA")
@@ -75,6 +79,9 @@ public class SecurityConfig {
 
                             if (esAdmin) {
                                 response.sendRedirect("/admin/dashboard");
+                            } else if (authentication.getAuthorities().stream()
+                                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_VETERINARIO"))) {
+                                response.sendRedirect("/veterinario/dashboard");
                             } else {
                                 response.sendRedirect("/recepcionista/dashboard");
                             }

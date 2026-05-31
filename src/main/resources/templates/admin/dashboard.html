@@ -6,14 +6,21 @@
 </head>
 <body>
 <div th:fragment="content">
-    <div class="admin-header">
+    <div class="admin-header admin-hero">
         <div>
-            <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard Administrador</h2>
-            <p>Bienvenido(a), <strong th:text="${nombreUsuario}">Administrador</strong></p>
+            <span class="admin-eyebrow">Panel administrativo</span>
+            <h2>Bienvenido, Administrador</h2>
+            <p>
+                <strong th:text="${nombreUsuario}">Administrador</strong>
+                <span> · Rol ADMIN · </span>
+                <span th:text="${#temporals.format(fechaActual, 'dd/MM/yyyy')}">31/05/2026</span>
+                <span> · </span>
+                <span id="adminClock">--:--</span>
+            </p>
         </div>
-        <span class="badge bg-primary">
-            <i class="fas fa-calendar-alt"></i>
-            <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">26/04/2026</span>
+        <span class="admin-status">
+            <i class="fas fa-circle-check"></i>
+            <span th:text="${estadoSistema}">Operativo</span>
         </span>
     </div>
 
@@ -50,7 +57,101 @@
         </a>
     </div>
 
+    <section class="admin-quick">
+        <a href="/admin/usuarios" class="btn btn-primary"><i class="fas fa-user-plus"></i> Nuevo Usuario</a>
+        <a href="/recepcionista/clientes/nuevo" class="btn btn-success"><i class="fas fa-user-friends"></i> Nuevo Cliente</a>
+        <a href="/recepcionista/mascotas/nuevo" class="btn btn-warning"><i class="fas fa-paw"></i> Nueva Mascota</a>
+        <a href="/recepcionista/citas/nueva" class="btn btn-info"><i class="fas fa-calendar-plus"></i> Nueva Cita</a>
+    </section>
+
+    <section class="admin-dashboard-grid">
+        <article class="admin-panel">
+            <div class="admin-panel-header">
+                <h3>Actividad reciente</h3>
+                <span>Datos reales del sistema</span>
+            </div>
+            <div class="admin-activity">
+                <div>
+                    <h4>Usuarios</h4>
+                    <p th:if="${ultimosUsuarios.empty}">Sin usuarios registrados.</p>
+                    <p th:each="usuario : ${ultimosUsuarios}">
+                        <i class="fas fa-user-shield"></i>
+                        <span th:text="${usuario.nombre}">Usuario</span>
+                        <small th:text="${usuario.rol}">ROL</small>
+                    </p>
+                </div>
+                <div>
+                    <h4>Mascotas</h4>
+                    <p th:if="${ultimasMascotas.empty}">Sin mascotas registradas.</p>
+                    <p th:each="mascota : ${ultimasMascotas}">
+                        <i class="fas fa-paw"></i>
+                        <span th:text="${mascota.nombre}">Mascota</span>
+                        <small th:text="${mascota.especie}">Especie</small>
+                    </p>
+                </div>
+                <div>
+                    <h4>Citas</h4>
+                    <p th:if="${ultimasCitas.empty}">Sin citas registradas.</p>
+                    <p th:each="cita : ${ultimasCitas}">
+                        <i class="fas fa-calendar-check"></i>
+                        <span th:text="${cita.mascota != null ? cita.mascota.nombre : 'Paciente'}">Paciente</span>
+                        <small th:text="${cita.estado}">Estado</small>
+                    </p>
+                </div>
+            </div>
+        </article>
+
+        <article class="admin-panel">
+            <div class="admin-panel-header">
+                <h3>Graficos</h3>
+                <span>Usuarios y citas</span>
+            </div>
+            <div class="admin-charts">
+                <canvas id="rolesChart" height="190"></canvas>
+                <canvas id="citasChart" height="190"></canvas>
+            </div>
+        </article>
+    </section>
+
     <div th:replace="~{fragments/chatbot_widget :: petClinicChatbot}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script th:inline="javascript">
+        const usuariosPorRol = /*[[${usuariosPorRol}]]*/ {};
+        const citasPorEstado = /*[[${citasPorEstado}]]*/ {};
+
+        function refreshClock() {
+            const now = new Date();
+            document.getElementById('adminClock').textContent = now.toLocaleTimeString('es-PE', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        refreshClock();
+        setInterval(refreshClock, 30000);
+
+        function renderDoughnut(id, data, label, colors) {
+            const canvas = document.getElementById(id);
+            const labels = Object.keys(data || {});
+            if (!canvas || labels.length === 0) {
+                return;
+            }
+            new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{ label, data: labels.map(key => data[key]), backgroundColor: colors }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        renderDoughnut('rolesChart', usuariosPorRol, 'Usuarios por rol', ['#2563eb', '#0f766e', '#b45309', '#be123c', '#7c3aed']);
+        renderDoughnut('citasChart', citasPorEstado, 'Citas por estado', ['#0ea5e9', '#22c55e', '#f59e0b', '#ef4444', '#64748b']);
+    </script>
 </div>
 </body>
 </html>

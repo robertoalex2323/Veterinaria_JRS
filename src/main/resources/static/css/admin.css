@@ -26,10 +26,39 @@
     color: #6B7280;
 }
 
+.admin-hero {
+    padding: 24px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.admin-eyebrow {
+    display: inline-block;
+    margin-bottom: 6px;
+    color: #2563EB;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.admin-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: #E7F7EF;
+    color: #047857;
+    font-weight: 700;
+}
+
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 18px;
+    margin-bottom: 22px;
 }
 
 .admin-stat-card {
@@ -65,6 +94,96 @@
     line-height: 1;
 }
 
+.admin-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.admin-quick .btn {
+    min-height: 44px;
+    border-radius: 8px;
+    font-weight: 700;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10);
+}
+
+.admin-dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+    gap: 18px;
+}
+
+.admin-panel {
+    padding: 22px;
+    border-radius: 8px;
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.admin-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.admin-panel-header h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.admin-panel-header span {
+    color: #6B7280;
+    font-size: .9rem;
+}
+
+.admin-activity {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.admin-activity h4 {
+    font-size: .92rem;
+    font-weight: 800;
+    color: #374151;
+}
+
+.admin-activity p {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 0 8px;
+    padding: 10px;
+    border-radius: 8px;
+    background: #F8FAFC;
+    border: 1px solid #E5E7EB;
+    color: #374151;
+}
+
+.admin-activity p span {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.admin-activity small {
+    color: #64748B;
+    font-weight: 700;
+}
+
+.admin-charts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
 .stat-users {
     background: linear-gradient(135deg, #123C69, #2563EB);
 }
@@ -96,6 +215,11 @@
     }
 
     .admin-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-dashboard-grid,
+    .admin-activity {
         grid-template-columns: 1fr;
     }
 }

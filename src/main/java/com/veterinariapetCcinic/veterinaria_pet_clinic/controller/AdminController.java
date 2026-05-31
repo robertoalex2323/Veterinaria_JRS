@@ -1,7 +1,12 @@
 package com.veterinariapetCcinic.veterinaria_pet_clinic.controller;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -67,7 +72,39 @@ public class AdminController {
         model.addAttribute("totalCitas", citaService.listarTodas().size());
         model.addAttribute("totalPagos", pagoService.listarTodos().size());
         model.addAttribute("totalAgendas", agendaRepository.count());
+        model.addAttribute("fechaActual", LocalDate.now());
+        model.addAttribute("estadoSistema", "Operativo");
+        model.addAttribute("ultimosUsuarios", usuarioRepository.findAll().stream()
+                .sorted(Comparator.comparing(Usuario::getFechaCreacion, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(5)
+                .toList());
+        model.addAttribute("ultimasMascotas", mascotaService.listarTodos().stream()
+                .sorted(Comparator.comparing(Mascota::getId, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(5)
+                .toList());
+        model.addAttribute("ultimasCitas", citaService.listarTodas().stream()
+                .sorted(Comparator.comparing(Cita::getFechaHora, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(5)
+                .toList());
+        model.addAttribute("usuariosPorRol", contarUsuariosPorRol(usuarioRepository.findAll()));
+        model.addAttribute("citasPorEstado", contarCitasPorEstado(citaService.listarTodas()));
         return "admin/dashboard";
+    }
+
+    private Map<String, Long> contarUsuariosPorRol(List<Usuario> usuarios) {
+        return usuarios.stream()
+                .collect(Collectors.groupingBy(
+                        usuario -> usuario.getRol() != null ? usuario.getRol() : "SIN_ROL",
+                        LinkedHashMap::new,
+                        Collectors.counting()));
+    }
+
+    private Map<String, Long> contarCitasPorEstado(List<Cita> citas) {
+        return citas.stream()
+                .collect(Collectors.groupingBy(
+                        cita -> cita.getEstado() != null ? cita.getEstado() : "SIN_ESTADO",
+                        LinkedHashMap::new,
+                        Collectors.counting()));
     }
 
     @GetMapping({"/usuarios", "/usuarios-admin"})

@@ -1,8 +1,4 @@
-cd chatbot_service
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python app.py<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="petClinicChatbot">
@@ -17,7 +13,7 @@ python app.py<!DOCTYPE html>
             <header class="vet-chatbot__header">
                 <div>
                     <strong>Asistente Pet Clinic</strong>
-                    <span>Orientacion veterinaria</span>
+                    <span>En linea · Orientacion veterinaria</span>
                 </div>
                 <button class="vet-chatbot__close" type="button" aria-label="Cerrar chat">
                     <i class="fas fa-times" aria-hidden="true"></i>
@@ -26,7 +22,7 @@ python app.py<!DOCTYPE html>
 
             <div class="vet-chatbot__messages" aria-live="polite">
                 <div class="vet-chatbot__message vet-chatbot__message--bot">
-                    Hola, bienvenido a Veterinaria Pet Clinic. Cuentame que necesita tu mascota y te ayudo con gusto.
+                    Hola, soy el asistente de Veterinaria Pet Clinic. Puedo ayudarte con citas, vacunas, banos, emergencias y cuidados basicos.
                 </div>
             </div>
 

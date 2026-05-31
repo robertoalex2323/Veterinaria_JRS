@@ -30,30 +30,27 @@ BATH = "\U0001F6C1"
 WARNING = "\u26A0\uFE0F"
 
 SYSTEM_PROMPT = """
-Eres el asistente virtual de Veterinaria Pet Clinic.
-Hablas como una recepcionista veterinaria humana y amable.
-Ayudas con citas, vacunas, mascotas, horarios y orientacion basica.
-Nunca respondas como robot.
-Manten conversaciones naturales.
-Recuerda el contexto reciente del usuario.
-Si el usuario proporciona datos para una cita, interpretalos correctamente.
-Ejemplo:
-Usuario: 'Brayan perro manana tarde'
-Interpretacion:
-Nombre: Brayan
-Mascota: perro
-Horario: tarde
+Eres el asistente virtual profesional de Veterinaria Pet Clinic.
+Atiendes como una recepcionista veterinaria experta: natural, empatica, clara y contextual.
+Tu objetivo es orientar, recopilar datos utiles y derivar a atencion veterinaria cuando corresponda.
 
-Debes responder:
-'Perfecto :) Tengo registrada una cita para Brayan con su perrito en horario de tarde. Ahora solo faltaria confirmar el motivo de consulta.'
+Capacidades:
+- Orientas sobre vacunas, desparasitacion, alimentacion, esterilizacion, banos, grooming, horarios, mascotas y citas.
+- Si el usuario quiere una cita, recopilas nombre del cliente, mascota, fecha u horario y motivo de consulta.
+- Si faltan datos, preguntas solo lo necesario.
+- Usas el historial reciente y los datos recordados de la sesion para no pedir lo mismo dos veces.
 
-Reglas de seguridad:
-- No inventes diagnosticos medicos.
+Reglas clinicas:
+- No inventes diagnosticos medicos definitivos.
 - No indiques medicamentos, dosis ni tratamientos sin evaluacion veterinaria.
-- En casos graves como convulsiones, intoxicacion, sangrado, dificultad para respirar, atropello, dolor intenso o desmayo, recomienda acudir a una veterinaria de inmediato.
+- En convulsiones, intoxicacion, sangrado, dificultad respiratoria, atropello, desmayo, dolor intenso o colapso, recomienda atencion veterinaria inmediata.
+
+Estilo:
 - Responde en espanol, con tono calido, profesional y breve.
-- Usa emojis moderados, solo cuando aporten calidez.
-- Evita parrafos enormes. Maximo 3 oraciones cortas.
+- Suena humano, no robotico.
+- Maximo 3 oraciones cortas, salvo que el usuario pida detalle.
+- Usa emojis con moderacion.
+- No digas que una cita ya quedo registrada en el sistema; solo ayuda a coordinarla.
 """.strip()
 
 
@@ -63,10 +60,28 @@ if GEMINI_API_KEY == "tu_api_key_de_gemini":
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
 GEMINI_TEMPERATURE = float(os.getenv("GEMINI_TEMPERATURE", "0.8"))
 GEMINI_TIMEOUT = int(os.getenv("GEMINI_TIMEOUT", "20"))
-MAX_HISTORY_MESSAGES = int(os.getenv("CHATBOT_HISTORY_LIMIT", "10"))
+GEMINI_MAX_OUTPUT_TOKENS = int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS", "220"))
+SPRING_BASE_URL = os.getenv("SPRING_BASE_URL", "http://localhost:8080").rstrip("/")
+
+
+def parse_history_limit(value):
+    text = str(value or "10").strip().lower()
+    if text in {"0", "libre", "unlimited", "ilimitado", "none", "sin_limite"}:
+        return None
+
+    try:
+        limit = int(text)
+    except ValueError:
+        return 10
+
+    return max(limit, 2)
+
+
+MAX_HISTORY_MESSAGES = parse_history_limit(os.getenv("CHATBOT_HISTORY_LIMIT", "10"))
 
 chat_histories = defaultdict(lambda: deque(maxlen=MAX_HISTORY_MESSAGES))
-APP_VERSION = "2026-05-24-chatbot-natural-v2"
+session_memory = defaultdict(dict)
+APP_VERSION = "2026-05-31-chatbot-natural-v3"
 
 
 INTENT_KEYWORDS = {
@@ -75,10 +90,16 @@ INTENT_KEYWORDS = {
         "no respira", "ahoga", "intoxic", "veneno", "atropell", "desmayo",
         "no se levanta", "dolor intenso",
     ),
-    "appointment": ("cita", "agendar", "reservar", "manana", "tarde", "consulta", "turno"),
+    "appointment": (
+        "cita", "agendar", "agenda", "reservar", "reserva", "manana", "tarde",
+        "noche", "hoy", "consulta", "turno", "lunes", "martes", "miercoles",
+        "jueves", "viernes", "sabado", "domingo",
+    ),
     "vaccines": ("vacuna", "vacunas", "vacunacion", "rabia", "parvovirus", "triple"),
     "baths": ("bano", "banos", "banio", "banios", "peluqueria", "grooming"),
     "deworming": ("desparasitar", "desparasitacion", "parasito", "pulga", "garrapata"),
+    "sterilization": ("esterilizar", "esterilizacion", "castrar", "castracion"),
+    "system_data": ("cuantas citas", "citas hay", "mascotas registradas", "clientes existen", "clientes registrados", "resumen del sistema"),
     "hours": ("horario", "hora", "atienden", "abren", "cierran"),
     "feeding": ("alimento", "alimentacion", "comida", "croquetas", "dieta", "comer"),
     "symptoms": ("no come", "no quiere comer", "vomita", "diarrea", "decaido", "tos", "cojea", "dolor"),
@@ -125,6 +146,13 @@ RESPONSE_BANK = {
         "La desparasitacion es importante y debe ajustarse a edad, peso y especie. Lo ideal es indicarla con esos datos para evitar dosis incorrectas.",
         f"Podemos orientarte con desparasitacion interna y externa {PAWS}. Dime que mascota tienes y su peso aproximado.",
     ],
+    "sterilization": [
+        "La esterilizacion puede ayudar a prevenir camadas no planificadas y algunos problemas de salud. Para orientarte mejor, dime si es perro o gato, su edad y si ya tuvo alguna evaluacion veterinaria.",
+        "Podemos ayudarte a coordinar una evaluacion para esterilizacion. Lo ideal es revisar edad, peso, estado general y vacunas antes de programarla.",
+    ],
+    "system_data": [
+        "Puedo revisar el resumen del sistema si Spring Boot esta encendido. Dame un momento y te comparto solo los datos disponibles.",
+    ],
     "hours": [
         f"Con gusto {SMILE}. Nuestro horario habitual es de lunes a sabado de 8:00 a.m. a 7:00 p.m.",
         "Atendemos normalmente de lunes a sabado de 8:00 a.m. a 7:00 p.m. Si es una urgencia, conviene comunicarse directamente con la clinica.",
@@ -159,11 +187,65 @@ def get_session_id(payload):
     return session_id or str(uuid.uuid4())
 
 
+def get_spring_json(path):
+    url = f"{SPRING_BASE_URL}{path}"
+    spring_request = urllib.request.Request(url, headers={"Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(spring_request, timeout=3) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError):
+        return None
+
+
+def extract_session_facts(message):
+    facts = {}
+    name_match = re.search(r"\b(?:me llamo|soy|mi nombre es)\s+([A-Za-zÁÉÍÓÚáéíóúÑñ]{3,})", message, re.IGNORECASE)
+    pet_match = re.search(r"\b(?:mi mascota se llama|mi perro se llama|mi gato se llama|se llama)\s+([A-Za-zÁÉÍÓÚáéíóúÑñ]{2,})", message, re.IGNORECASE)
+    reason_match = re.search(r"\b(?:motivo|consulta|porque|por que)\s+(.+)$", message, re.IGNORECASE)
+
+    if name_match:
+        facts["cliente"] = name_match.group(1).strip().title()
+    if pet_match:
+        facts["mascota_nombre"] = pet_match.group(1).strip().title()
+    if reason_match and len(reason_match.group(1).strip()) >= 4:
+        facts["motivo"] = reason_match.group(1).strip()
+
+    normalized = normalize_text(message)
+    pet_type = re.search(r"\b(perro|perrito|gato|gatito|conejo|hamster|cobayo)\b", normalized)
+    if pet_type:
+        facts["mascota_tipo"] = pet_type.group(1)
+
+    return facts
+
+
+def update_session_memory(session_id, message):
+    facts = extract_session_facts(message)
+    if facts:
+        session_memory[session_id].update(facts)
+
+
+def serialize_memory(session_id):
+    memory = session_memory.get(session_id, {})
+    if not memory:
+        return "Sin datos recordados."
+
+    labels = {
+        "cliente": "Cliente",
+        "mascota_nombre": "Nombre de mascota",
+        "mascota_tipo": "Tipo de mascota",
+        "motivo": "Motivo",
+    }
+    return "\n".join(f"{labels.get(key, key)}: {value}" for key, value in memory.items())
+
+
 def looks_like_appointment_data(normalized_message):
     has_pet = any(pet in normalized_message for pet in ("perro", "gato", "conejo", "hamster", "cobayo"))
     has_time = any(
         time in normalized_message
-        for time in ("manana", "tarde", "noche", "hoy", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado")
+        for time in (
+            "manana", "tarde", "noche", "hoy", "lunes", "martes", "miercoles",
+            "jueves", "viernes", "sabado", "domingo",
+        )
     )
     has_name_like_word = bool(re.search(r"\b[a-zA-Z]{3,}\b", normalized_message))
     return has_pet and has_time and has_name_like_word
@@ -188,6 +270,9 @@ def detect_intent(message, history):
         if any(contains_keyword(normalized_message, keyword) for keyword in INTENT_KEYWORDS[intent]):
             return intent
 
+    if any(keyword in normalized_message for keyword in INTENT_KEYWORDS["system_data"]):
+        return "system_data"
+
     if any(contains_keyword(normalized_message, keyword) for keyword in INTENT_KEYWORDS["appointment"]):
         return "appointment"
 
@@ -198,6 +283,9 @@ def detect_intent(message, history):
     for intent in service_intents:
         if any(contains_keyword(normalized_message, keyword) for keyword in INTENT_KEYWORDS[intent]):
             return intent
+
+    if any(contains_keyword(normalized_message, keyword) for keyword in INTENT_KEYWORDS["sterilization"]):
+        return "sterilization"
 
     if any(contains_keyword(normalized_message, keyword) for keyword in INTENT_KEYWORDS["pets"]):
         return "pets"
@@ -228,8 +316,11 @@ def serialize_history(history):
     return "\n".join(lines)
 
 
-def build_user_prompt(message, intent, history):
+def build_user_prompt(message, intent, history, session_id):
     return f"""
+Datos recordados de esta sesion:
+{serialize_memory(session_id)}
+
 Historial reciente:
 {serialize_history(history)}
 
@@ -241,7 +332,7 @@ Si el usuario esta dando datos para una cita, interpreta nombre, mascota, dia u 
 """.strip()
 
 
-def generate_with_gemini(message, intent, history):
+def generate_with_gemini(message, intent, history, session_id):
     if not GEMINI_API_KEY:
         return None
 
@@ -256,12 +347,12 @@ def generate_with_gemini(message, intent, history):
         "contents": [
             {
                 "role": "user",
-                "parts": [{"text": build_user_prompt(message, intent, history)}],
+                "parts": [{"text": build_user_prompt(message, intent, history, session_id)}],
             }
         ],
         "generationConfig": {
             "temperature": GEMINI_TEMPERATURE,
-            "maxOutputTokens": 180,
+            "maxOutputTokens": GEMINI_MAX_OUTPUT_TOKENS,
         },
     }
     request_data = json.dumps(payload).encode("utf-8")
@@ -295,12 +386,15 @@ def extract_appointment_details(message):
     normalized = normalize_text(message)
     details = []
     pet_match = re.search(r"\b(perro|perrito|gato|gatito|conejo|hamster|cobayo)\b", normalized)
-    time_match = re.search(r"\b(manana|tarde|noche|hoy|lunes|martes|miercoles|jueves|viernes|sabado)\b", normalized)
+    time_match = re.search(
+        r"\b(manana|tarde|noche|hoy|lunes|martes|miercoles|jueves|viernes|sabado|domingo)\b",
+        normalized,
+    )
     name_match = re.search(r"\b([A-Z][a-z]{2,})\b", normalize_text(message).title())
     ignored_names = {
         "Perro", "Perrito", "Gato", "Gatito", "Conejo", "Hamster", "Cobayo",
         "Manana", "Tarde", "Noche", "Hoy", "Lunes", "Martes", "Miercoles",
-        "Jueves", "Viernes", "Sabado", "Cita", "Consulta", "Agendar",
+        "Jueves", "Viernes", "Sabado", "Domingo", "Cita", "Consulta", "Agendar",
         "Reservar", "Hola", "Gracias",
     }
 
@@ -328,11 +422,22 @@ def fallback_response(message, intent, history=None):
     if intent == "emergency":
         return choose_response("emergency", history)
 
+    if intent == "system_data":
+        summary = get_spring_json("/api/chatbot/resumen")
+        if not summary:
+            return "Puedo ayudarte con ese dato, pero ahora no logro conectar con Spring Boot. Verifica que la aplicacion principal este encendida y vuelvo a intentarlo."
+        return (
+            f"Resumen actual: hoy hay {summary.get('citasHoy', 0)} citas, "
+            f"{summary.get('citasPendientes', 0)} citas pendientes, "
+            f"{summary.get('mascotas', 0)} mascotas registradas y "
+            f"{summary.get('clientes', 0)} clientes registrados."
+        )
+
     if intent == "appointment":
         details = extract_appointment_details(message)
         if details:
             return (
-                f"Perfecto {SMILE} Tengo anotado: {details}. Solo faltaria confirmar el motivo de consulta para coordinar mejor la atencion."
+                f"Perfecto {SMILE} Tengo estos datos para coordinar la cita: {details}. Solo faltaria confirmar el motivo de consulta."
             )
         return choose_response("appointment", history)
 
@@ -353,9 +458,13 @@ def save_message(session_id, role, content):
 
 
 def build_response(message, session_id):
+    update_session_memory(session_id, message)
     history = chat_histories[session_id]
     intent = detect_intent(message, history)
-    gemini_response = generate_with_gemini(message, intent, history)
+    if intent == "system_data":
+        gemini_response = None
+    else:
+        gemini_response = generate_with_gemini(message, intent, history, session_id)
     provider = "gemini" if gemini_response else "local-fallback"
     response = gemini_response or fallback_response(message, intent, history)
 
@@ -409,6 +518,7 @@ def reset():
 
     if session_id:
         chat_histories.pop(session_id, None)
+        session_memory.pop(session_id, None)
 
     return jsonify({"status": "ok", "session_id": session_id})
 
@@ -421,6 +531,8 @@ def health():
             "service": "pet-clinic-chatbot",
             "gemini_enabled": bool(GEMINI_API_KEY),
             "model": GEMINI_MODEL if GEMINI_API_KEY else None,
+            "history_limit": "unlimited" if MAX_HISTORY_MESSAGES is None else MAX_HISTORY_MESSAGES,
+            "spring_base_url": SPRING_BASE_URL,
             "version": APP_VERSION,
         }
     )

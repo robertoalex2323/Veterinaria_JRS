@@ -28,23 +28,26 @@ copy .env.example .env
 GEMINI_API_KEY=tu_api_key_de_gemini
 GEMINI_MODEL=gemini-2.0-flash
 GEMINI_TEMPERATURE=0.8
+GEMINI_MAX_OUTPUT_TOKENS=220
 CHATBOT_HISTORY_LIMIT=10
 CHATBOT_ALLOWED_ORIGINS=*
 ```
+
+`CHATBOT_HISTORY_LIMIT=10` guarda los ultimos 10 mensajes de la sesion, contando mensajes del usuario y respuestas del bot. Puedes usar `CHATBOT_HISTORY_LIMIT=libre` o `0` para no limitar el historial en memoria mientras el servicio siga encendido.
 
 ## Ejecutar rapido
 
 En PowerShell:
 
 ```powershell
-cd C:\Users\Administrador\Documents\GitHub\chatbot_service
+cd C:\Users\Administrador\Documents\GitHub\Veterinaria_Pet_Clinic\chatbot_service
 .\run_chatbot.ps1
 ```
 
 Si PowerShell bloquea scripts, usa:
 
 ```powershell
-cd C:\Users\Administrador\Documents\GitHub\chatbot_service
+cd C:\Users\Administrador\Documents\GitHub\Veterinaria_Pet_Clinic\chatbot_service
 .\run_chatbot.bat
 ```
 
@@ -53,7 +56,7 @@ cd C:\Users\Administrador\Documents\GitHub\chatbot_service
 Abre una terminal en VS Code y ejecuta:
 
 ```powershell
-cd C:\Users\Administrador\Documents\GitHub\chatbot_service
+cd C:\Users\Administrador\Documents\GitHub\Veterinaria_Pet_Clinic\chatbot_service
 py -3 -m pip install -r requirements.txt
 py -3 app.py
 ```
