@@ -112,6 +112,13 @@ public class VeterinariaController {
             }
         }
 
+        List<AlertaCritica> alertasCriticas = alertaCriticaService.buscarPendientes().stream()
+        .filter(a -> "CRITICA".equalsIgnoreCase(a.getPrioridad()))
+        .toList();
+
+    model.addAttribute("alertasCriticas", alertasCriticas);
+    model.addAttribute("criticosHoy", alertasCriticas.size());
+
         Map<Long, SignosVitales> ultimoSignoPorMascota = new HashMap<>();
         Map<Long, String> estadoPorMascota = new HashMap<>();
         Map<Long, String> prioridadPorMascota = new HashMap<>();
@@ -260,6 +267,63 @@ public class VeterinariaController {
 
         return "Veterinaria/pacientes";
     }
+
+    @GetMapping("/reportes")
+public String reportes(
+        @RequestParam(required = false) Long mascotaId,
+        @RequestParam(required = false, defaultValue = "consulta") String tipo,
+        Model model) {
+    model.addAttribute("currentPage", "reportes");
+
+    usuarioRepository.findByUsername(getUsername()).ifPresent(u ->
+            model.addAttribute("nombreUsuario", u.getNombre()));
+
+    List<Mascota> mascotas = filtrarActivas(mascotaService.listarTodosConCliente());
+    model.addAttribute("mascotas", mascotas);
+    model.addAttribute("tipoReporte", tipo);
+
+    Mascota mascotaSeleccionada = null;
+
+    if (mascotaId != null) {
+        mascotaSeleccionada = mascotaService.buscarPorIdConCliente(mascotaId);
+    } else if (!mascotas.isEmpty()) {
+        mascotaSeleccionada = mascotas.get(0);
+    }
+
+    if (mascotaSeleccionada != null) {
+        Long id = mascotaSeleccionada.getId();
+
+        List<Consulta> consultas = consultaService.buscarPorMascota(id);
+        List<SignosVitales> signos = signosVitalesService.ultimosRegistrosDeMascota(id, 10);
+        List<AlertaCritica> alertas = alertaCriticaService.buscarPorMascota(id).stream()
+                .filter(a -> !"RESUELTA".equalsIgnoreCase(a.getEstado()))
+                .toList();
+
+        SignosVitales ultimoSigno = signos != null && !signos.isEmpty() ? signos.get(0) : null;
+
+        if (ultimoSigno != null) {
+            if (ultimoSigno.getEstadoTemperatura() == null || ultimoSigno.getEstadoTemperatura().isBlank()
+                    || ultimoSigno.getEstadoFrecuenciaCardiaca() == null || ultimoSigno.getEstadoFrecuenciaCardiaca().isBlank()
+                    || ultimoSigno.getEstadoFrecuenciaRespiratoria() == null || ultimoSigno.getEstadoFrecuenciaRespiratoria().isBlank()
+                    || ultimoSigno.getEstadoGeneral() == null || ultimoSigno.getEstadoGeneral().isBlank()) {
+                clasificarYGuardarSignos(ultimoSigno, mascotaSeleccionada, ultimoSigno.getConsulta());
+            }
+
+            model.addAttribute("estadoTempTexto", textoEstadoVital(ultimoSigno.getEstadoTemperatura()));
+            model.addAttribute("estadoFcTexto", textoEstadoVital(ultimoSigno.getEstadoFrecuenciaCardiaca()));
+            model.addAttribute("estadoFrTexto", textoEstadoVital(ultimoSigno.getEstadoFrecuenciaRespiratoria()));
+            model.addAttribute("estadoGeneralTexto", textoEstadoVital(ultimoSigno.getEstadoGeneral()));
+        }
+
+        model.addAttribute("mascotaSeleccionada", mascotaSeleccionada);
+        model.addAttribute("consultas", consultas != null ? consultas : new ArrayList<>());
+        model.addAttribute("signos", signos != null ? signos : new ArrayList<>());
+        model.addAttribute("ultimoSigno", ultimoSigno);
+        model.addAttribute("alertas", alertas);
+    }
+
+    return "Veterinaria/reportes";
+}
 
     // ============ INICIAR TRIAJE ============
     @PostMapping("/pacientes/triaje")

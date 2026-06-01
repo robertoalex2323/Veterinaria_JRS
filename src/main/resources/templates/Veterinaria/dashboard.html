@@ -128,29 +128,34 @@
                 </div>
 
                 <div class="right-column">
-                    <div class="panel alert-panel">
-                        <div class="panel-header">
-                            <h2>Alertas Criticas</h2>
-                        </div>
-                        <div id="alertasCriticas" class="small-list">
-                            <div th:each="mascota : ${mascotas}"
-                                 th:with="signo=${ultimoSignoPorMascota[mascota.id]}"
-                                 th:if="${signo != null and ((signo.temperatura != null and (signo.temperatura >= 40 or signo.temperatura <= 36)) or (signo.frecuenciaCardiaca != null and signo.frecuenciaCardiaca > 180) or (signo.frecuenciaRespiratoria != null and signo.frecuenciaRespiratoria > 60))}"
-                                 class="small-item">
-                                <div>
-                                    <strong th:text="${mascota.nombre + ' - ' + mascota.especie}">Paciente</strong>
-                                    <p th:text="${'Ultimo triaje: ' + #temporals.format(signo.fechaRegistro, 'dd/MM/yyyy HH:mm')}">Ultimo triaje</p>
-                                </div>
-                                <span class="tag danger">Alta</span>
-                            </div>
-                            <div th:if="${criticosHoy == 0}" class="small-item">
-                                <div>
-                                    <strong>Sin alertas criticas</strong>
-                                    <p>No hay triajes con signos fuera de rango.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                   <div class="panel alert-panel">
+    <div class="panel-header">
+        <h2>Alertas Criticas</h2>
+        <span class="badge" th:text="${alertasCriticas.size() + ' activas'}">0 activas</span>
+    </div>
+
+    <div id="alertasCriticas" class="small-list">
+        <div th:each="alerta : ${alertasCriticas}" class="small-item">
+            <div>
+                <strong th:text="${alerta.mascota != null ? alerta.mascota.nombre : 'Paciente'}">Paciente</strong>
+                <p th:text="${alerta.descripcion}">Descripcion de alerta</p>
+            </div>
+            <a th:if="${alerta.mascota != null}"
+               th:href="@{/veterinaria/historial/{id}(id=${alerta.mascota.id})}"
+               class="tag danger"
+               style="text-decoration:none;">
+                Ver
+            </a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(alertasCriticas)}" class="small-item">
+            <div>
+                <strong>Sin alertas criticas</strong>
+                <p>No hay alertas activadas desde historial clinico.</p>
+            </div>
+        </div>
+    </div>
+</div>
 
                     <div class="panel follow-panel">
                         <div class="panel-header">
